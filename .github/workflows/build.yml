@@ -1,0 +1,79 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: winui-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, test & publish (win-x64)
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test backend (FluentDesktop.Core)
+        run: dotnet test FluentDesktop.Core.Tests -c Release
+
+      - name: Publish standalone single-file exe
+        run: >
+          dotnet publish FluentDesktop/FluentDesktop.csproj
+          -c Release -r win-x64 -p:Platform=x64
+          -p:SelfContained=true
+          -p:WindowsAppSDKSelfContained=true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:DebugType=none
+          -o publish
+
+      - name: Isolate the exe
+        shell: pwsh
+        run: |
+          Get-ChildItem publish | Format-Table Name, Length
+          $dist = Join-Path $env:RUNNER_TEMP 'dist'
+          New-Item -ItemType Directory -Force $dist | Out-Null
+          Copy-Item publish/FluentDesktop.exe $dist
+          $size = [math]::Round((Get-Item "$dist/FluentDesktop.exe").Length / 1MB, 1)
+          "FluentDesktop.exe: $size MB"
+          "DIST=$dist" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Smoke test the lone exe (launch and visit every page)
+        shell: pwsh
+        run: |
+          $result = Join-Path $env:RUNNER_TEMP 'smoke.txt'
+          $env:FLUENT_DESKTOP_SMOKE = $result
+          $p = Start-Process -FilePath (Join-Path $env:DIST 'FluentDesktop.exe') -WorkingDirectory $env:RUNNER_TEMP -PassThru
+          if (-not $p.WaitForExit(180000)) { $p.Kill(); throw 'App did not finish the smoke run within 180s' }
+          if (-not (Test-Path $result)) { throw "App exited with code $($p.ExitCode) before writing a smoke report" }
+          Get-Content $result
+          if (-not (Select-String -Path $result -Pattern '^SMOKE OK' -Quiet)) { throw 'Smoke test reported errors' }
+
+      - name: Upload exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: FluentDesktop-win-x64
+          path: ${{ env.DIST }}/FluentDesktop.exe
+          if-no-files-found: error
+          retention-days: 30

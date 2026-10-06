@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="FluentDesktop.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:FluentDesktop.Helpers"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
+    NavigationCacheMode="Required">
+
+    <ScrollViewer>
+        <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="{StaticResource PagePadding}" Spacing="{StaticResource SettingsCardSpacing}">
+            <TextBlock Margin="0,0,0,8" Style="{StaticResource TitleTextBlockStyle}" Text="Settings" />
+
+            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Appearance &amp; Theme" />
+            <toolkit:SettingsCard Description="Select which app theme to display" Header="App theme">
+                <toolkit:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE790;" />
+                </toolkit:SettingsCard.HeaderIcon>
+                <ComboBox MinWidth="160" SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}">
+                    <ComboBoxItem Content="Use system setting" />
+                    <ComboBoxItem Content="Light" />
+                    <ComboBoxItem Content="Dark" />
+                </ComboBox>
+            </toolkit:SettingsCard>
+            <toolkit:SettingsCard Description="Window material behind the navigation pane and title bar" Header="Backdrop">
+                <toolkit:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE771;" />
+                </toolkit:SettingsCard.HeaderIcon>
+                <ComboBox MinWidth="160" SelectedIndex="{x:Bind ViewModel.BackdropIndex, Mode=TwoWay}">
+                    <ComboBoxItem Content="Mica" />
+                    <ComboBoxItem Content="Mica Alt" />
+                    <ComboBoxItem Content="Acrylic" />
+                </ComboBox>
+            </toolkit:SettingsCard>
+
+            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="ADB &amp; Tools" />
+            <toolkit:SettingsExpander Description="Android Debug Bridge server used by Scrcpy" Header="ADB Server Diagnostics" IsExpanded="True">
+                <toolkit:SettingsExpander.HeaderIcon>
+                    <FontIcon Glyph="&#xE8EA;" />
+                </toolkit:SettingsExpander.HeaderIcon>
+                <Button Click="RestartAdb_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsAdbRestarting), Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Grid Width="14" Height="14">
+                            <ProgressRing Width="14" Height="14" IsActive="{x:Bind ViewModel.IsAdbRestarting, Mode=OneWay}" />
+                            <FontIcon FontSize="14" Glyph="&#xE777;" Visibility="{x:Bind helpers:Bind.Collapsed(ViewModel.IsAdbRestarting), Mode=OneWay}" />
+                        </Grid>
+                        <TextBlock Text="Restart ADB Server" />
+                    </StackPanel>
+                </Button>
+                <toolkit:SettingsExpander.Items>
+                    <toolkit:SettingsCard Description="5037" Header="Default Port" />
+                    <toolkit:SettingsCard Description="{x:Bind ViewModel.AdbPath}" Header="Platform Tools" />
+                </toolkit:SettingsExpander.Items>
+            </toolkit:SettingsExpander>
+
+            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="About" />
+            <toolkit:SettingsExpander Description="WinUI 3 front end with a C# command-running backend." Header="Fluent Desktop">
+                <toolkit:SettingsExpander.HeaderIcon>
+                    <ImageIcon Source="{x:Bind Logo}" />
+                </toolkit:SettingsExpander.HeaderIcon>
+                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" IsTextSelectionEnabled="True" Text="{x:Bind ViewModel.AppVersion}" />
+                <toolkit:SettingsExpander.Items>
+                    <toolkit:SettingsCard HorizontalContentAlignment="Left" ContentAlignment="Left">
+                        <TextBlock TextWrapping="Wrap" Text="Built with the Windows App SDK (WinUI 3) and .NET. Features drive ADB, scrcpy, gh/git, yt-dlp, npx and the SpielerPlus Python pipeline as child processes; the WinUI layer follows the WinUI Gallery layout (NavigationView, TitleBar, Mica, SettingsCard)." />
+                    </toolkit:SettingsCard>
+                    <toolkit:SettingsCard Click="OpenConfig_Click" Description="{x:Bind ConfigDir}" Header="Open config folder" IsClickEnabled="True">
+                        <toolkit:SettingsCard.ActionIcon>
+                            <FontIcon Glyph="&#xE8A7;" />
+                        </toolkit:SettingsCard.ActionIcon>
+                    </toolkit:SettingsCard>
+                </toolkit:SettingsExpander.Items>
+            </toolkit:SettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

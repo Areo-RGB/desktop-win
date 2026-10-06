@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="FluentDesktop.Views.HubPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:FluentDesktop.Helpers"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
+    xmlns:views="using:FluentDesktop.Views"
+    NavigationCacheMode="Required">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Padding="36,24,36,0">
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Hub" />
+            <Button HorizontalAlignment="Right" Click="Refresh_Click" ToolTipService.ToolTip="Refresh status">
+                <FontIcon FontSize="14" Glyph="&#xE72C;" />
+            </Button>
+        </Grid>
+        <SelectorBar x:Name="Tabs" Grid.Row="1" Margin="28,8,28,0" SelectionChanged="Tabs_SelectionChanged">
+            <SelectorBarItem IsSelected="True" Text="Server &amp; Tunnel Control" />
+            <SelectorBarItem Text="MCP Endpoints" />
+            <SelectorBarItem Text="Settings &amp; Logs" />
+            <SelectorBarItem Text="Dashboard" />
+        </SelectorBar>
+
+        <ProgressBar Grid.Row="2" VerticalAlignment="Top" IsIndeterminate="True" Visibility="{x:Bind ViewModel.IsProcessing, Mode=OneWay}" />
+
+        <!--  0. Server & Tunnel Control  -->
+        <ScrollViewer x:Name="ControlPanel" Grid.Row="2">
+            <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="{StaticResource PagePadding}" Spacing="{StaticResource SettingsCardSpacing}">
+                <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="Manage local MCPHub server, Cloudflare tunnel, and SSH daemon." />
+
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Overview" />
+                <toolkit:SettingsCard Description="Open the MCPHub dashboard in your browser." Header="Open Dashboard">
+                    <toolkit:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xE774;" />
+                    </toolkit:SettingsCard.HeaderIcon>
+                    <Button Click="OpenDashboard_Click" Content="Local Dashboard" IsEnabled="{x:Bind views:HubBind.IsTrue(ViewModel.Status.IsBackendRunning), Mode=OneWay}" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="Start or stop SSH Daemon + MCPHub + Cloudflare Tunnel in sequence." Header="Master Service Toggle">
+                    <toolkit:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xE7E8;" />
+                    </toolkit:SettingsCard.HeaderIcon>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Click="StartAll_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsProcessing), Mode=OneWay}" Style="{StaticResource AccentButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="14" Glyph="&#xE768;" />
+                                <TextBlock Text="Start All" />
+                            </StackPanel>
+                        </Button>
+                        <Button Click="StopAll_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsProcessing), Mode=OneWay}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="14" Foreground="{x:Bind helpers:Bind.Danger}" Glyph="&#xE71A;" />
+                                <TextBlock Text="Stop All" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </toolkit:SettingsCard>
+
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Services" />
+                <toolkit:SettingsCard Description="Required for remote SSH execution &amp; tool proxy" Header="SSH MCP Daemon">
+                    <toolkit:SettingsCard.HeaderIcon>
+                        <FontIcon Foreground="{x:Bind views:HubBind.StateBrush(ViewModel.Status.IsSshRunning), Mode=OneWay}" Glyph="{x:Bind views:HubBind.StateGlyph(ViewModel.Status.IsSshRunning), Mode=OneWay}" />
+                    </toolkit:SettingsCard.HeaderIcon>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Click="StartSsh_Click" Content="{x:Bind views:HubBind.SshLabel(ViewModel.Status.IsSshRunning), Mode=OneWay}" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsProcessing), Mode=OneWay}" />
+                        <Button Click="TestSsh_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsProcessing), Mode=OneWay}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="12" Glyph="&#xE839;" />
+                                <TextBlock Text="Test SSH" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="{x:Bind views:HubBind.LocalServerDescription(ViewModel.DashboardUrl), Mode=OneWay}" Header="MCPHub Local Server">
+                    <toolkit:SettingsCard.HeaderIcon>
+                        <FontIcon Foreground="{x:Bind views:HubBind.StateBrush(ViewModel.Status.IsBackendRunning), Mode=OneWay}" Glyph="{x:Bind views:HubBind.StateGlyph(ViewModel.Status.IsBackendRunning), Mode=OneWay}" />
+                    </toolkit:SettingsCard.HeaderIcon>
+                    <Button Click="ToggleHub_Click" Content="{x:Bind views:HubBind.HubLabel(ViewModel.Status.IsBackendRunning), Mode=OneWay}" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsProcessing), Mode=OneWay}" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="Public HTTPS endpoint for external agents" Header="Cloudflare Tunnel">
+                    <toolkit:SettingsCard.HeaderIcon>
+                        <FontIcon Foreground="{x:Bind views:HubBind.StateBrush(ViewModel.Status.IsTunnelRunning), Mode=OneWay}" Glyph="{x:Bind views:HubBind.StateGlyph(ViewModel.Status.IsTunnelRunning), Mode=OneWay}" />
+                    </toolkit:SettingsCard.HeaderIcon>
+                    <Button Click="ToggleTunnel_Click" Content="{x:Bind views:HubBind.TunnelLabel(ViewModel.Status.IsTunnelRunning), Mode=OneWay}" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsProcessing), Mode=OneWay}" />
+                </toolkit:SettingsCard>
+
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Troubleshooting" />
+                <toolkit:SettingsExpander Description="{x:Bind views:HubBind.PortKillDescription(ViewModel.PortKillLogPath)}" Header="Kill Process on Port" IsExpanded="True">
+                    <toolkit:SettingsExpander.HeaderIcon>
+                        <FontIcon Foreground="{x:Bind helpers:Bind.Danger}" Glyph="&#xE7BA;" />
+                    </toolkit:SettingsExpander.HeaderIcon>
+                    <toolkit:SettingsExpander.Items>
+                        <toolkit:SettingsCard Header="Port">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <NumberBox
+                                    x:Name="KillPortBox"
+                                    MinWidth="120"
+                                    Maximum="65535"
+                                    Minimum="1"
+                                    Value="3000" />
+                                <Button Click="InspectPort_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsProcessing), Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon FontSize="12" Glyph="&#xE721;" />
+                                        <TextBlock Text="Inspect" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Click="KillPort_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsProcessing), Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon FontSize="12" Foreground="{x:Bind helpers:Bind.Danger}" Glyph="&#xE74D;" />
+                                        <TextBlock Text="Kill on Port" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </toolkit:SettingsCard>
+                    </toolkit:SettingsExpander.Items>
+                </toolkit:SettingsExpander>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  1. MCP Endpoints  -->
+        <ScrollViewer x:Name="EndpointsPanel" Grid.Row="2" Visibility="Collapsed">
+            <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="{StaticResource PagePadding}" Spacing="{StaticResource SettingsCardSpacing}">
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="MCP Endpoints &amp; Credentials" />
+                <toolkit:SettingsCard Description="{x:Bind ViewModel.Status.LocalMcpUrl, Mode=OneWay}" Header="Local MCP Endpoint">
+                    <Button Click="Copy_Click" Style="{StaticResource SubtleButtonStyle}" Tag="{x:Bind ViewModel.Status.LocalMcpUrl, Mode=OneWay}" ToolTipService.ToolTip="Copy">
+                        <FontIcon FontSize="14" Glyph="&#xE8C8;" />
+                    </Button>
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="{x:Bind ViewModel.Status.LocalSshMcpUrl, Mode=OneWay}" Header="Local SSH MCP">
+                    <Button Click="Copy_Click" Style="{StaticResource SubtleButtonStyle}" Tag="{x:Bind ViewModel.Status.LocalSshMcpUrl, Mode=OneWay}" ToolTipService.ToolTip="Copy">
+                        <FontIcon FontSize="14" Glyph="&#xE8C8;" />
+                    </Button>
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="{x:Bind ViewModel.Status.PublicMcpUrl, Mode=OneWay}" Header="Public Endpoint (Cloudflare)">
+                    <Button Click="Copy_Click" Content="Copy Public Endpoint" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind ViewModel.Status.PublicMcpUrl, Mode=OneWay}" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="{x:Bind ViewModel.Status.SshPassword, Mode=OneWay}" Header="SSH MCP Password">
+                    <Button Click="Copy_Click" Content="Copy SSH Password" Tag="{x:Bind ViewModel.Status.SshPassword, Mode=OneWay}" />
+                </toolkit:SettingsCard>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  2. Settings & Logs  -->
+        <Grid x:Name="LogsPanel" Grid.Row="2" MaxWidth="{StaticResource PageMaxWidth}" Padding="{StaticResource PagePadding}" RowSpacing="12" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid>
+                <toolkit:Segmented SelectedIndex="{x:Bind ViewModel.LogIndex, Mode=TwoWay}">
+                    <toolkit:SegmentedItem Content="MCPHub Log" />
+                    <toolkit:SegmentedItem Content="Tunnel Log" />
+                    <toolkit:SegmentedItem Content="Port Kill Log" />
+                </toolkit:Segmented>
+                <Button HorizontalAlignment="Right" Click="CopyLog_Click" ToolTipService.ToolTip="Copy log to clipboard">
+                    <FontIcon FontSize="14" Glyph="&#xE8C8;" />
+                </Button>
+            </Grid>
+            <Border Grid.Row="1" Style="{StaticResource ConsoleStyle}">
+                <ScrollViewer>
+                    <TextBlock Style="{StaticResource ConsoleTextStyle}" Text="{x:Bind ViewModel.VisibleLog, Mode=OneWay}" />
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!--  3. Embedded MCPHub dashboard  -->
+        <Grid x:Name="DashboardPanel" Grid.Row="2" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Padding="28,8" ColumnSpacing="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Click="WebBack_Click" Style="{StaticResource SubtleButtonStyle}" ToolTipService.ToolTip="Back">
+                    <FontIcon FontSize="14" Glyph="&#xE72B;" />
+                </Button>
+                <Button Grid.Column="1" Click="WebReload_Click" Style="{StaticResource SubtleButtonStyle}" ToolTipService.ToolTip="Reload">
+                    <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                </Button>
+                <Button Grid.Column="2" Click="WebHome_Click" Style="{StaticResource SubtleButtonStyle}" ToolTipService.ToolTip="Dashboard home">
+                    <FontIcon FontSize="14" Glyph="&#xE80F;" />
+                </Button>
+                <TextBlock Grid.Column="3" Margin="8,0" VerticalAlignment="Center" Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind ViewModel.DashboardUrl, Mode=OneWay}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                <HyperlinkButton Grid.Column="4" Click="OpenDashboard_Click" Content="Open in Browser" />
+            </Grid>
+            <ProgressBar x:Name="WebProgress" Grid.Row="1" VerticalAlignment="Top" IsIndeterminate="True" Visibility="Collapsed" />
+            <WebView2 x:Name="DashboardWeb" Grid.Row="1" Margin="0,4,0,0" />
+            <StackPanel
+                x:Name="WebError"
+                Grid.Row="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="12"
+                Visibility="Collapsed">
+                <FontIcon FontSize="40" Glyph="&#xE753;" />
+                <TextBlock x:Name="WebErrorText" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                <Button HorizontalAlignment="Center" Click="WebReload_Click" Content="Retry" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

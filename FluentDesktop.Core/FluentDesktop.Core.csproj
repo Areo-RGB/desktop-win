@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Command-running backend. Plain net8.0 (no WinUI references) so it can be
+       unit tested on any OS; the WinUI app references it. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>FluentDesktop.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FluentDesktop.Core.Tests" />
+  </ItemGroup>
+
+  <!-- SpielerPlus python pipeline, extracted to %LOCALAPPDATA% at runtime. -->
+  <ItemGroup>
+    <EmbeddedResource Include="SpielerPlus\python\*.py;SpielerPlus\python\requirements.txt;SpielerPlus\python\games_en.xlsx">
+      <LogicalName>spielerplus/%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

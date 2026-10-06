@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="FluentDesktop.Views.GithubPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:FluentDesktop.Helpers"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
+    xmlns:views="using:FluentDesktop.Views"
+    xmlns:vm="using:FluentDesktop.ViewModels"
+    NavigationCacheMode="Required">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Padding="36,24,36,0" ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Image x:Name="GithubLogo" Width="28" Height="28" />
+            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource TitleTextBlockStyle}" Text="GitHub Repositories" />
+            <Border
+                Grid.Column="2"
+                Margin="8,0,0,0"
+                HorizontalAlignment="Left"
+                BorderBrush="{x:Bind views:GithubBind.AuthBrush(ViewModel.IsAuthed), Mode=OneWay}"
+                Style="{StaticResource PillBorderStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <FontIcon FontSize="12" Foreground="{x:Bind views:GithubBind.AuthBrush(ViewModel.IsAuthed), Mode=OneWay}" Glyph="{x:Bind views:GithubBind.AuthGlyph(ViewModel.IsAuthed), Mode=OneWay}" />
+                    <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{x:Bind views:GithubBind.AuthBrush(ViewModel.IsAuthed), Mode=OneWay}" Text="{x:Bind views:GithubBind.AuthLabel(ViewModel.IsAuthed), Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <SelectorBar x:Name="Tabs" Grid.Row="1" Margin="28,8,28,0" SelectionChanged="Tabs_SelectionChanged">
+            <SelectorBarItem IsSelected="True" Text="Repositories" />
+            <SelectorBarItem Text="Create &amp; Connect" />
+        </SelectorBar>
+
+        <ProgressBar Grid.Row="2" VerticalAlignment="Top" IsIndeterminate="True" Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
+
+        <!--  Repositories  -->
+        <ScrollViewer x:Name="ReposPanel" Grid.Row="2">
+            <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="{StaticResource PagePadding}" Spacing="16">
+                <Grid>
+                    <TextBlock VerticalAlignment="Center" Style="{StaticResource SecondaryCaptionStyle}" Text="Manage, sort, and batch-operate on your GitHub repositories authenticated via `gh` CLI." />
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8">
+                        <Button Click="ReloadCached_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsLoading), Mode=OneWay}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                                <TextBlock Text="Reload Cached" />
+                            </StackPanel>
+                        </Button>
+                        <Button Click="Sync_Click" IsEnabled="{x:Bind ViewModel.CanSync, Mode=OneWay}" Style="{StaticResource AccentButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="14" Glyph="&#xE895;" />
+                                <TextBlock Text="Sync from GitHub" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!--  Stats  -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Border Padding="12,8" Style="{StaticResource SubtleCardStyle}">
+                        <TextBlock><Run Text="Total: " /><Run FontWeight="Bold" Text="{x:Bind ViewModel.TotalCount, Mode=OneWay}" /></TextBlock>
+                    </Border>
+                    <Border Padding="12,8" Style="{StaticResource SubtleCardStyle}">
+                        <TextBlock><Run Text="Public: " /><Run FontWeight="Bold" Foreground="{x:Bind helpers:Bind.Success}" Text="{x:Bind ViewModel.PublicCount, Mode=OneWay}" /></TextBlock>
+                    </Border>
+                    <Border Padding="12,8" Style="{StaticResource SubtleCardStyle}">
+                        <TextBlock><Run Text="Private: " /><Run FontWeight="Bold" Foreground="{x:Bind helpers:Bind.Warning}" Text="{x:Bind ViewModel.PrivateCount, Mode=OneWay}" /></TextBlock>
+                    </Border>
+                    <Border Padding="12,8" Style="{StaticResource SubtleCardStyle}">
+                        <TextBlock><Run Text="Archived: " /><Run FontWeight="Bold" Foreground="{x:Bind helpers:Bind.Neutral}" Text="{x:Bind ViewModel.ArchivedCount, Mode=OneWay}" /></TextBlock>
+                    </Border>
+                </StackPanel>
+
+                <TextBlock Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" Visibility="{x:Bind helpers:Bind.VisibleIfText(ViewModel.StatusMessage), Mode=OneWay}" />
+
+                <!--  Filter bar  -->
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <AutoSuggestBox PlaceholderText="Search repositories by name, owner, description, language..." QueryIcon="Find" Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ComboBox Grid.Column="1" MinWidth="170" ItemsSource="{x:Bind ViewModel.VisibilityOptions}" SelectedIndex="{x:Bind ViewModel.VisibilityIndex, Mode=TwoWay}" />
+                    <ComboBox Grid.Column="2" MinWidth="260" ItemsSource="{x:Bind ViewModel.SortOptions}" SelectedIndex="{x:Bind ViewModel.SortIndex, Mode=TwoWay}" />
+                </Grid>
+
+                <!--  Batch toolbar  -->
+                <Border Padding="12,6" Style="{StaticResource CardStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <CheckBox
+                            x:Name="SelectAllBox"
+                            VerticalAlignment="Center"
+                            Click="SelectAll_Click"
+                            Content="{x:Bind ViewModel.SelectionLabel, Mode=OneWay}"
+                            FontWeight="SemiBold"
+                            IsChecked="{x:Bind ViewModel.SelectAllState, Mode=OneWay}"
+                            IsThreeState="False" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind ViewModel.HasSelection, Mode=OneWay}">
+                            <HyperlinkButton Click="ClearSelection_Click" Content="Clear Selection" />
+                            <Button Click="Batch_Click" Tag="SetPrivate">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="12" Glyph="&#xE72E;" />
+                                    <TextBlock Text="Set Private" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="Batch_Click" Tag="SetPublic">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="12" Glyph="&#xE774;" />
+                                    <TextBlock Text="Set Public" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="Batch_Click" Tag="Archive">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="12" Glyph="&#xE7B8;" />
+                                    <TextBlock Text="Archive" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="Batch_Click" Tag="Delete">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="12" Foreground="{x:Bind helpers:Bind.Danger}" Glyph="&#xE74D;" />
+                                    <TextBlock Text="Delete Selected" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!--  Empty state  -->
+                <Border Padding="36" Style="{StaticResource CardStyle}" Visibility="{x:Bind helpers:Bind.Collapsed(ViewModel.HasRepos), Mode=OneWay}">
+                    <StackPanel HorizontalAlignment="Center" Spacing="12">
+                        <FontIcon FontSize="40" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Glyph="&#xE943;" />
+                        <TextBlock HorizontalAlignment="Center" Style="{StaticResource SubtitleTextBlockStyle}" Text="{x:Bind ViewModel.EmptyMessage, Mode=OneWay}" />
+                        <Button HorizontalAlignment="Center" Click="Sync_Click" Content="Sync Repositories Now" Style="{StaticResource AccentButtonStyle}" Visibility="{x:Bind ViewModel.ShowSyncNow, Mode=OneWay}" />
+                    </StackPanel>
+                </Border>
+
+                <!--  Repo list  -->
+                <Border Padding="0" Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.HasRepos, Mode=OneWay}">
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.PagedRepos}">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:GithubRepoItem">
+                                <Grid
+                                    Padding="16,10"
+                                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox MinWidth="0" Click="RepoCheck_Click" IsChecked="{x:Bind IsSelected, Mode=OneWay}" Tag="{x:Bind}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock FontFamily="{StaticResource MonoFont}" FontWeight="Bold" Text="{x:Bind NameWithOwner}" TextTrimming="CharacterEllipsis" />
+                                            <Border Padding="6,1" BorderBrush="{x:Bind BadgeBrush}" Style="{StaticResource PillBorderStyle}">
+                                                <TextBlock FontSize="9" FontWeight="Bold" Foreground="{x:Bind BadgeBrush}" Text="{x:Bind Badge}" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock MaxLines="2" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Description}" TextTrimming="CharacterEllipsis" Visibility="{x:Bind HasDescription}" />
+                                    </StackPanel>
+                                    <Border Grid.Column="2" Padding="8,2" VerticalAlignment="Center" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Visibility="{x:Bind HasLanguage}">
+                                        <TextBlock FontSize="11" Text="{x:Bind Language}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="3" VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Updated}" />
+                                        <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Pushed}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4" VerticalAlignment="Center" Orientation="Horizontal" Spacing="4">
+                                        <StackPanel Orientation="Horizontal" Spacing="2" Visibility="{x:Bind HasStars}">
+                                            <FontIcon FontSize="12" Foreground="{x:Bind helpers:Bind.Warning}" Glyph="&#xE734;" />
+                                            <TextBlock VerticalAlignment="Center" FontSize="11" Text="{x:Bind Stars}" />
+                                        </StackPanel>
+                                        <Button Click="OpenRepo_Click" Style="{StaticResource SubtleButtonStyle}" Tag="{x:Bind}" ToolTipService.ToolTip="Open on GitHub">
+                                            <FontIcon FontSize="14" Glyph="&#xE8A7;" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </Border>
+
+                <!--  Pagination  -->
+                <Border Padding="12,6" Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.HasRepos, Mode=OneWay}">
+                    <Grid>
+                        <TextBlock VerticalAlignment="Center" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind ViewModel.PageSummary, Mode=OneWay}" />
+                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Spacing="2">
+                            <Button Click="FirstPage_Click" IsEnabled="{x:Bind ViewModel.CanGoBack, Mode=OneWay}" Style="{StaticResource SubtleButtonStyle}" ToolTipService.ToolTip="First page">
+                                <FontIcon FontSize="12" Glyph="&#xE892;" />
+                            </Button>
+                            <Button Click="PrevPage_Click" IsEnabled="{x:Bind ViewModel.CanGoBack, Mode=OneWay}" Style="{StaticResource SubtleButtonStyle}" ToolTipService.ToolTip="Previous page">
+                                <FontIcon FontSize="12" Glyph="&#xE76B;" />
+                            </Button>
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.PageButtons}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Orientation="Horizontal" Spacing="2" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PageButton">
+                                        <Button
+                                            MinWidth="36"
+                                            Click="Page_Click"
+                                            Content="{x:Bind Label}"
+                                            IsEnabled="{x:Bind helpers:Bind.Not(IsEllipsis)}"
+                                            Style="{x:Bind views:GithubBind.PageButtonStyle(IsCurrent)}"
+                                            Tag="{x:Bind}" />
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                            <Button Click="NextPage_Click" IsEnabled="{x:Bind ViewModel.CanGoForward, Mode=OneWay}" Style="{StaticResource SubtleButtonStyle}" ToolTipService.ToolTip="Next page">
+                                <FontIcon FontSize="12" Glyph="&#xE76C;" />
+                            </Button>
+                            <Button Click="LastPage_Click" IsEnabled="{x:Bind ViewModel.CanGoForward, Mode=OneWay}" Style="{StaticResource SubtleButtonStyle}" ToolTipService.ToolTip="Last page">
+                                <FontIcon FontSize="12" Glyph="&#xE893;" />
+                            </Button>
+                        </StackPanel>
+                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind ViewModel.PageLabel, Mode=OneWay}" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  Create & Connect  -->
+        <ScrollViewer x:Name="CreatePanel" Grid.Row="2" Visibility="Collapsed">
+            <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="{StaticResource PagePadding}" Spacing="16">
+                <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="Create new repositories on GitHub via `gh`, or link a local folder to a new or existing remote and push." />
+                <InfoBar
+                    IsClosable="False"
+                    IsOpen="{x:Bind ViewModel.AuthWarningVisible, Mode=OneWay}"
+                    Message="gh CLI is not authenticated. Run `gh auth login` in a terminal, then Sync from GitHub on the Repositories tab."
+                    Severity="Warning" />
+
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Create card  -->
+                    <Border VerticalAlignment="Top" Padding="20" Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="&#xE710;" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Create new repository" />
+                                    <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="Runs `gh repo create`" />
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBox x:Name="CreateName" Header="Repository name *" PlaceholderText="e.g. my-awesome-app" />
+                            <TextBox x:Name="CreateDesc" AcceptsReturn="True" Header="Description (optional)" PlaceholderText="What does this repo do?" TextWrapping="Wrap" />
+                            <toolkit:Segmented x:Name="CreateVisibility" SelectedIndex="1">
+                                <toolkit:SegmentedItem Content="Public">
+                                    <toolkit:SegmentedItem.Icon>
+                                        <FontIcon Glyph="&#xE774;" />
+                                    </toolkit:SegmentedItem.Icon>
+                                </toolkit:SegmentedItem>
+                                <toolkit:SegmentedItem Content="Private">
+                                    <toolkit:SegmentedItem.Icon>
+                                        <FontIcon Glyph="&#xE72E;" />
+                                    </toolkit:SegmentedItem.Icon>
+                                </toolkit:SegmentedItem>
+                            </toolkit:Segmented>
+                            <CheckBox x:Name="CreateReadme" Content="Add a README" IsChecked="True" />
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox x:Name="CreateGitignore" HorizontalAlignment="Stretch" Header=".gitignore" />
+                                <ComboBox x:Name="CreateLicense" Grid.Column="1" HorizontalAlignment="Stretch" Header="License" />
+                            </Grid>
+                            <CheckBox x:Name="CreateClone" Click="CreateClone_Click" Content="Clone after creating" />
+                            <Grid x:Name="CloneDirRow" ColumnSpacing="8" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="CloneDir" Header="Clone parent directory (optional)" PlaceholderText="C:\Users\paul\Projects" />
+                                <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseCloneDir_Click" ToolTipService.ToolTip="Browse">
+                                    <FontIcon FontSize="14" Glyph="&#xE838;" />
+                                </Button>
+                            </Grid>
+                            <Button x:Name="CreateButton" HorizontalAlignment="Stretch" Click="Create_Click" Style="{StaticResource AccentButtonStyle}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ProgressRing x:Name="CreateRing" Width="16" Height="16" IsActive="False" />
+                                    <TextBlock x:Name="CreateButtonText" Text="Create repository" />
+                                </StackPanel>
+                            </Button>
+                            <InfoBar x:Name="CreateResult" IsClosable="True" IsOpen="False">
+                                <InfoBar.Content>
+                                    <TextBlock x:Name="CreateResultLogs" Margin="0,0,0,12" Style="{StaticResource MonoCaptionStyle}" />
+                                </InfoBar.Content>
+                            </InfoBar>
+                        </StackPanel>
+                    </Border>
+
+                    <!--  Connect card  -->
+                    <Border Grid.Column="1" VerticalAlignment="Top" Padding="20" Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="&#xE71B;" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Connect local folder" />
+                                    <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="Link to GitHub &amp; push" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="LocalPath" Header="Local folder *" KeyDown="LocalPath_KeyDown" PlaceholderText="C:\Users\paul\Projects\my-app" />
+                                <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseLocal_Click" ToolTipService.ToolTip="Browse folders">
+                                    <FontIcon FontSize="14" Glyph="&#xE838;" />
+                                </Button>
+                                <Button x:Name="InspectButton" Grid.Column="2" VerticalAlignment="Bottom" Click="Inspect_Click" Content="Inspect" />
+                            </Grid>
+                            <InfoBar x:Name="LocalInfo" IsClosable="False" IsOpen="False">
+                                <InfoBar.ActionButton>
+                                    <Button x:Name="GitInitButton" Click="GitInit_Click" Content="git init" Visibility="Collapsed" />
+                                </InfoBar.ActionButton>
+                            </InfoBar>
+                            <toolkit:Segmented x:Name="ConnectMode" SelectionChanged="ConnectMode_SelectionChanged" SelectedIndex="0">
+                                <toolkit:SegmentedItem Content="Link existing repo">
+                                    <toolkit:SegmentedItem.Icon>
+                                        <FontIcon Glyph="&#xE71B;" />
+                                    </toolkit:SegmentedItem.Icon>
+                                </toolkit:SegmentedItem>
+                                <toolkit:SegmentedItem Content="Create new from folder">
+                                    <toolkit:SegmentedItem.Icon>
+                                        <FontIcon Glyph="&#xE710;" />
+                                    </toolkit:SegmentedItem.Icon>
+                                </toolkit:SegmentedItem>
+                            </toolkit:Segmented>
+                            <AutoSuggestBox
+                                x:Name="ExistingRemote"
+                                Header="Existing remote (owner/repo) *"
+                                QuerySubmitted="ExistingRemote_QuerySubmitted"
+                                SuggestionChosen="ExistingRemote_SuggestionChosen"
+                                TextChanged="ExistingRemote_TextChanged"
+                                TextMemberPath="NameWithOwner"
+                                UpdateTextOnSelect="True">
+                                <AutoSuggestBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:GithubRepoItem">
+                                        <StackPanel Padding="0,4">
+                                            <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="13" Text="{x:Bind NameWithOwner}" />
+                                            <TextBlock MaxLines="1" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Pushed}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </AutoSuggestBox.ItemTemplate>
+                            </AutoSuggestBox>
+                            <TextBlock x:Name="ExistingRemoteHelp" Style="{StaticResource SecondaryCaptionStyle}" />
+                            <StackPanel x:Name="FreshPanel" Spacing="8" Visibility="Collapsed">
+                                <TextBox x:Name="FreshName" Header="New repository name *" PlaceholderText="e.g. my-awesome-app" />
+                                <toolkit:Segmented x:Name="FreshVisibility" SelectedIndex="1">
+                                    <toolkit:SegmentedItem Content="Public" />
+                                    <toolkit:SegmentedItem Content="Private" />
+                                </toolkit:Segmented>
+                            </StackPanel>
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="RemoteName" Header="Remote name" Text="origin" />
+                                <TextBox x:Name="Branch" Grid.Column="1" Header="Branch (blank = HEAD)" PlaceholderText="main" />
+                            </Grid>
+                            <CheckBox x:Name="PushAfter" Content="Push after connecting" IsChecked="True" />
+                            <Button x:Name="ConnectButton" HorizontalAlignment="Stretch" Click="Connect_Click" Style="{StaticResource AccentButtonStyle}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ProgressRing x:Name="ConnectRing" Width="16" Height="16" IsActive="False" />
+                                    <TextBlock x:Name="ConnectButtonText" Text="Link &amp; push" />
+                                </StackPanel>
+                            </Button>
+                            <InfoBar x:Name="ConnectResult" IsClosable="True" IsOpen="False">
+                                <InfoBar.Content>
+                                    <TextBlock x:Name="ConnectResultLogs" Margin="0,0,0,12" Style="{StaticResource MonoCaptionStyle}" />
+                                </InfoBar.Content>
+                            </InfoBar>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

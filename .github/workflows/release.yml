@@ -1,0 +1,28 @@
+name: Release
+
+# Push a tag like v1.0.0 to build the standalone exe and attach it to a release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  release:
+    name: Attach exe to GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: FluentDesktop-win-x64
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: FluentDesktop.exe
+          generate_release_notes: true

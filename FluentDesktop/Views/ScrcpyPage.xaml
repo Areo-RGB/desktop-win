@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="FluentDesktop.Views.ScrcpyPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:FluentDesktop.Helpers"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
+    xmlns:views="using:FluentDesktop.Views"
+    xmlns:vm="using:FluentDesktop.ViewModels"
+    NavigationCacheMode="Required">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Margin="36,24,36,0" Style="{StaticResource TitleTextBlockStyle}" Text="Scrcpy" />
+        <SelectorBar x:Name="Tabs" Grid.Row="1" Margin="28,8,28,0" SelectionChanged="Tabs_SelectionChanged">
+            <SelectorBarItem IsSelected="True" Text="Devices" />
+            <SelectorBarItem Text="Scrcpy Settings" />
+        </SelectorBar>
+
+        <!--  Devices  -->
+        <ScrollViewer x:Name="DevicesPanel" Grid.Row="2">
+            <StackPanel MaxWidth="900" Padding="{StaticResource PagePadding}" Spacing="16">
+                <Border Style="{StaticResource CardStyle}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon FontSize="24" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="&#xE8EA;" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Connected Android Devices" />
+                            <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind ViewModel.Subtitle, Mode=OneWay}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                            <Button Click="Wifi_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE701;" />
+                                    <TextBlock Text="Wi-Fi Connect" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="Refresh_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsScanning), Mode=OneWay}" Style="{StaticResource AccentButtonStyle}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Grid Width="14" Height="14">
+                                        <ProgressRing Width="14" Height="14" IsActive="{x:Bind ViewModel.IsScanning, Mode=OneWay}" />
+                                        <FontIcon FontSize="14" Glyph="&#xE72C;" Visibility="{x:Bind helpers:Bind.Collapsed(ViewModel.IsScanning), Mode=OneWay}" />
+                                    </Grid>
+                                    <TextBlock Text="Refresh" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!--  Missing binaries  -->
+                <InfoBar
+                    IsClosable="False"
+                    IsOpen="{x:Bind ViewModel.ShowBinaryBanner, Mode=OneWay}"
+                    Message="{x:Bind ViewModel.BinaryBannerText, Mode=OneWay}"
+                    Severity="Warning"
+                    Title="{x:Bind ViewModel.BinaryBannerTitle, Mode=OneWay}">
+                    <InfoBar.Content>
+                        <StackPanel Margin="0,0,0,12" Spacing="8">
+                            <Border Padding="10" Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="4">
+                                <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind ViewModel.InstallInstructions}" />
+                            </Border>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Click="CopyInstall_Click" Content="Copy Install Command" />
+                                <Button Click="OpenDownload_Click" Content="Open Download Page" />
+                                <Button Click="Recheck_Click" Content="Recheck" />
+                            </StackPanel>
+                        </StackPanel>
+                    </InfoBar.Content>
+                </InfoBar>
+
+                <!--  Empty state  -->
+                <Border Padding="40" Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.NoDevices, Mode=OneWay}">
+                    <StackPanel HorizontalAlignment="Center" Spacing="12">
+                        <FontIcon FontSize="48" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Glyph="&#xE8EA;" />
+                        <TextBlock HorizontalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind ViewModel.EmptyTitle, Mode=OneWay}" />
+                        <TextBlock HorizontalAlignment="Center" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind ViewModel.EmptyText, Mode=OneWay}" TextAlignment="Center" />
+                        <InfoBar IsClosable="False" IsOpen="{x:Bind views:ScrcpyBind.HasText(ViewModel.ScanError), Mode=OneWay}" Message="{x:Bind ViewModel.ScanError, Mode=OneWay}" Severity="Error" />
+                        <Border Padding="16,8" HorizontalAlignment="Center" Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="6" Visibility="{x:Bind ViewModel.HasScanned, Mode=OneWay}">
+                            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="adb tcpip 5555  •  adb connect &lt;ip_address&gt;:5555" />
+                        </Border>
+                        <Button HorizontalAlignment="Center" Click="Refresh_Click" Content="Scan for Devices" Style="{StaticResource AccentButtonStyle}" Visibility="{x:Bind helpers:Bind.Collapsed(ViewModel.HasScanned), Mode=OneWay}" />
+                    </StackPanel>
+                </Border>
+
+                <!--  Device cards  -->
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Devices}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Spacing="14" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DeviceItem">
+                            <Border
+                                BorderBrush="{x:Bind views:ScrcpyBind.SelectionBrush(IsSelected), Mode=OneWay}"
+                                BorderThickness="{x:Bind views:ScrcpyBind.SelectionThickness(IsSelected), Mode=OneWay}"
+                                Style="{StaticResource CardStyle}"
+                                Tag="{x:Bind}"
+                                Tapped="Device_Tapped">
+                                <StackPanel Spacing="12">
+                                    <Grid ColumnSpacing="14">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="12" Height="12" Fill="{x:Bind StateBrush}" />
+                                        <StackPanel Grid.Column="1" Spacing="2">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind DisplayName}" />
+                                                <Border Padding="6,1" Background="{ThemeResource AccentFillColorDefaultBrush}" CornerRadius="4" Visibility="{x:Bind IsSelected, Mode=OneWay}">
+                                                    <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" Text="Selected" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind SerialText}" />
+                                            <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Details}" />
+                                        </StackPanel>
+                                        <Border Grid.Column="2" Padding="8,4" Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="6" Visibility="{x:Bind HasBattery}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <FontIcon FontSize="14" Foreground="{x:Bind helpers:Bind.Success}" Glyph="{x:Bind BatteryGlyph}" />
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="{x:Bind Battery}" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Column="3" BorderBrush="{x:Bind StateBrush}" Style="{StaticResource PillBorderStyle}">
+                                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{x:Bind StateBrush}" Text="{x:Bind State}" />
+                                        </Border>
+                                    </Grid>
+
+                                    <!--  Online actions  -->
+                                    <StackPanel Spacing="12" Visibility="{x:Bind IsOnline}">
+                                        <MenuFlyoutSeparator />
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <Button Click="Launch_Click" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon FontSize="14" Glyph="&#xEC15;" />
+                                                    <TextBlock Text="Launch Scrcpy" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Click="Capture_Click" IsEnabled="{x:Bind helpers:Bind.Not(IsCapturing), Mode=OneWay}" Tag="{x:Bind}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Grid Width="14" Height="14">
+                                                        <ProgressRing Width="14" Height="14" IsActive="{x:Bind IsCapturing, Mode=OneWay}" />
+                                                        <FontIcon FontSize="14" Glyph="&#xE722;" Visibility="{x:Bind helpers:Bind.Collapsed(IsCapturing), Mode=OneWay}" />
+                                                    </Grid>
+                                                    <TextBlock Text="Capture Screen" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Click="ScreenshotsFolder_Click">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon FontSize="14" Glyph="&#xE838;" />
+                                                    <TextBlock Text="Screenshots Folder" />
+                                                </StackPanel>
+                                            </Button>
+                                            <DropDownButton ToolTipService.ToolTip="Device Actions">
+                                                <FontIcon FontSize="14" Glyph="&#xE712;" />
+                                                <DropDownButton.Flyout>
+                                                    <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                        <MenuFlyoutItem Click="TcpIp_Click" Tag="{x:Bind}" Text="Enable Wi-Fi ADB (Port 5555)">
+                                                            <MenuFlyoutItem.Icon>
+                                                                <FontIcon Glyph="&#xE701;" />
+                                                            </MenuFlyoutItem.Icon>
+                                                        </MenuFlyoutItem>
+                                                        <MenuFlyoutSeparator />
+                                                        <MenuFlyoutItem Click="Reboot_Click" Tag="{x:Bind}" Text="Reboot Device">
+                                                            <MenuFlyoutItem.Icon>
+                                                                <FontIcon Glyph="&#xE777;" />
+                                                            </MenuFlyoutItem.Icon>
+                                                        </MenuFlyoutItem>
+                                                        <MenuFlyoutItem Click="RebootRecovery_Click" Tag="{x:Bind}" Text="Reboot to Recovery">
+                                                            <MenuFlyoutItem.Icon>
+                                                                <FontIcon Glyph="&#xE90F;" />
+                                                            </MenuFlyoutItem.Icon>
+                                                        </MenuFlyoutItem>
+                                                        <MenuFlyoutItem Click="RebootBootloader_Click" Tag="{x:Bind}" Text="Reboot to Fastboot / Bootloader">
+                                                            <MenuFlyoutItem.Icon>
+                                                                <FontIcon Glyph="&#xE756;" />
+                                                            </MenuFlyoutItem.Icon>
+                                                        </MenuFlyoutItem>
+                                                    </MenuFlyout>
+                                                </DropDownButton.Flyout>
+                                            </DropDownButton>
+                                        </StackPanel>
+
+                                        <!--  Screenshots  -->
+                                        <StackPanel Spacing="8" Visibility="{x:Bind HasScreenshots, Mode=OneWay}">
+                                            <MenuFlyoutSeparator />
+                                            <Grid>
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <FontIcon FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="&#xE91B;" />
+                                                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Captured Screenshots" />
+                                                </StackPanel>
+                                                <HyperlinkButton HorizontalAlignment="Right" Click="ClearShots_Click" Content="Clear" Tag="{x:Bind}" />
+                                            </Grid>
+                                            <ListView
+                                                Height="110"
+                                                ItemsSource="{x:Bind Screenshots}"
+                                                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                                ScrollViewer.HorizontalScrollMode="Enabled"
+                                                ScrollViewer.VerticalScrollMode="Disabled"
+                                                SelectedItem="{x:Bind ActiveScreenshot, Mode=TwoWay}"
+                                                SelectionMode="Single">
+                                                <ListView.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <ItemsStackPanel Orientation="Horizontal" />
+                                                    </ItemsPanelTemplate>
+                                                </ListView.ItemsPanel>
+                                                <ListView.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:ScreenshotItem">
+                                                        <Grid Width="75" Height="100" CornerRadius="6">
+                                                            <Image Source="{x:Bind Thumbnail}" Stretch="UniformToFill" />
+                                                            <Border VerticalAlignment="Bottom" Background="#BE000000">
+                                                                <TextBlock HorizontalAlignment="Center" FontSize="9" FontWeight="Bold" Foreground="White" Text="{x:Bind Time}" />
+                                                            </Border>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ListView.ItemTemplate>
+                                            </ListView>
+                                            <Border Padding="0" Style="{StaticResource SubtleCardStyle}" Visibility="{x:Bind helpers:Bind.VisibleIfNotNull(ActiveScreenshot), Mode=OneWay}">
+                                                <StackPanel>
+                                                    <Grid Padding="12,6">
+                                                        <TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Text="{x:Bind ActiveScreenshot.Caption, Mode=OneWay}" />
+                                                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="2">
+                                                            <Button Click="CopyShot_Click" Content="Copy" Tag="{x:Bind}" />
+                                                            <Button Click="OpenShot_Click" Style="{StaticResource SubtleButtonStyle}" Tag="{x:Bind}" ToolTipService.ToolTip="Open in System Viewer">
+                                                                <FontIcon FontSize="14" Glyph="&#xE8A7;" />
+                                                            </Button>
+                                                            <Button Click="ZoomIn_Click" Style="{StaticResource SubtleButtonStyle}" Tag="{x:Bind}" ToolTipService.ToolTip="Zoom In">
+                                                                <FontIcon FontSize="14" Glyph="&#xE8A3;" />
+                                                            </Button>
+                                                            <Button Click="ZoomOut_Click" Style="{StaticResource SubtleButtonStyle}" Tag="{x:Bind}" ToolTipService.ToolTip="Zoom Out">
+                                                                <FontIcon FontSize="14" Glyph="&#xE71F;" />
+                                                            </Button>
+                                                            <Button Click="ZoomReset_Click" Style="{StaticResource SubtleButtonStyle}" Tag="{x:Bind}" ToolTipService.ToolTip="Reset Zoom">
+                                                                <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                                                            </Button>
+                                                            <Button Click="DeleteShot_Click" Style="{StaticResource SubtleButtonStyle}" Tag="{x:Bind}" ToolTipService.ToolTip="Delete Screenshot">
+                                                                <FontIcon FontSize="14" Foreground="{x:Bind helpers:Bind.Danger}" Glyph="&#xE74D;" />
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    <ScrollViewer
+                                                        Height="320"
+                                                        Background="#C8000000"
+                                                        HorizontalScrollBarVisibility="Auto"
+                                                        Loaded="Zoom_Loaded"
+                                                        MaxZoomFactor="5"
+                                                        MinZoomFactor="0.1"
+                                                        Tag="{x:Bind}"
+                                                        ZoomMode="Enabled">
+                                                        <Image Height="320" Source="{x:Bind ActiveScreenshot.Full, Mode=OneWay}" Stretch="Uniform" />
+                                                    </ScrollViewer>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!--  Offline hint  -->
+                                    <InfoBar IsClosable="False" IsOpen="{x:Bind IsOffline}" Message="{x:Bind OfflineHint}" Severity="Warning" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  Scrcpy settings  -->
+        <ScrollViewer x:Name="SettingsPanel" Grid.Row="2" Visibility="Collapsed">
+            <StackPanel MaxWidth="900" Padding="{StaticResource PagePadding}" Spacing="{StaticResource SettingsCardSpacing}">
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Launch Scrcpy" />
+                <toolkit:SettingsCard Description="Mirror the selected device in an external scrcpy window using the settings configured below." Header="Device">
+                    <toolkit:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xE8EA;" />
+                    </toolkit:SettingsCard.HeaderIcon>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox
+                            MinWidth="320"
+                            DisplayMemberPath="ComboLabel"
+                            ItemsSource="{x:Bind ViewModel.Devices}"
+                            PlaceholderText="No devices scanned yet"
+                            SelectedItem="{x:Bind ViewModel.SelectedDevice, Mode=TwoWay}" />
+                        <Button Click="Refresh_Click" Content="Scan" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsScanning), Mode=OneWay}" />
+                    </StackPanel>
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Header="Launch Scrcpy with these settings">
+                    <toolkit:SettingsCard.Description>
+                        <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="Select an online device to enable launching." Visibility="{x:Bind helpers:Bind.Collapsed(ViewModel.CanLaunchSelected), Mode=OneWay}" />
+                    </toolkit:SettingsCard.Description>
+                    <Button Click="LaunchSelected_Click" IsEnabled="{x:Bind ViewModel.CanLaunchSelected, Mode=OneWay}" Style="{StaticResource AccentButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="14" Glyph="&#xEC15;" />
+                            <TextBlock Text="Launch" />
+                        </StackPanel>
+                    </Button>
+                </toolkit:SettingsCard>
+
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Video &amp; Display Configuration" />
+                <toolkit:SettingsCard Header="Max Resolution Limit">
+                    <ComboBox x:Name="MaxSizeBox" MinWidth="240" SelectionChanged="MaxSize_Changed" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Header="Max Frame Rate (FPS)">
+                    <ComboBox x:Name="MaxFpsBox" MinWidth="240" SelectionChanged="MaxFps_Changed" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Header="Video Bitrate">
+                    <ComboBox x:Name="BitRateBox" MinWidth="240" SelectionChanged="BitRate_Changed" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Header="Video Codec">
+                    <ComboBox x:Name="CodecBox" MinWidth="240" SelectionChanged="Codec_Changed" />
+                </toolkit:SettingsCard>
+
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Window &amp; Behavior Switches" />
+                <toolkit:SettingsCard Description="Keeps device display active and prevents sleep (--stay-awake)" Header="Stay Awake while Mirroring">
+                    <ToggleSwitch IsOn="{x:Bind ViewModel.Config.StayAwake, Mode=TwoWay}" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="Turns off physical screen while mirroring to PC (--turn-screen-off)" Header="Turn Device Screen Off">
+                    <ToggleSwitch IsOn="{x:Bind ViewModel.Config.TurnScreenOff, Mode=TwoWay}" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="Renders touch circles on device screen (--show-touches)" Header="Show Physical Touches">
+                    <ToggleSwitch IsOn="{x:Bind ViewModel.Config.ShowTouches, Mode=TwoWay}" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="Plays audio on phone instead of PC (--no-audio)" Header="Disable Audio Forwarding">
+                    <ToggleSwitch IsOn="{x:Bind ViewModel.Config.NoAudio, Mode=TwoWay}" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="Pins the mirror window above other desktop windows (--always-on-top)" Header="Always on Top Window">
+                    <ToggleSwitch IsOn="{x:Bind ViewModel.Config.AlwaysOnTop, Mode=TwoWay}" />
+                </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="Saves video recordings directly to your Videos folder" Header="Record Mirroring Session to MP4">
+                    <ToggleSwitch IsOn="{x:Bind ViewModel.Config.RecordVideo, Mode=TwoWay}" />
+                </toolkit:SettingsCard>
+
+                <StackPanel Spacing="{StaticResource SettingsCardSpacing}" Visibility="{x:Bind ViewModel.HasRunning, Mode=OneWay}">
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Active Running Scrcpy Instances" />
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Running}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="4" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RunningScrcpy">
+                                <toolkit:SettingsCard Description="{x:Bind Started}" Header="{x:Bind Title}">
+                                    <toolkit:SettingsCard.HeaderIcon>
+                                        <FontIcon Foreground="{x:Bind helpers:Bind.Success}" Glyph="&#xE957;" />
+                                    </toolkit:SettingsCard.HeaderIcon>
+                                    <Button Click="Kill_Click" Content="Stop" Tag="{x:Bind}" />
+                                </toolkit:SettingsCard>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </StackPanel>
+
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Environment &amp; Binaries" />
+                <toolkit:SettingsExpander Description="{x:Bind ViewModel.ScrcpyVersionText, Mode=OneWay}" Header="Binaries" IsExpanded="True">
+                    <toolkit:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE756;" />
+                    </toolkit:SettingsExpander.HeaderIcon>
+                    <Button Click="Recheck_Click" Content="Recheck Binaries" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.CheckingBinaries), Mode=OneWay}" />
+                    <toolkit:SettingsExpander.Items>
+                        <toolkit:SettingsCard Description="{x:Bind ViewModel.ScrcpyPathText, Mode=OneWay}" Header="Scrcpy Binary" />
+                        <toolkit:SettingsCard Description="{x:Bind ViewModel.ScrcpyVersionText, Mode=OneWay}" Header="Scrcpy Version" />
+                        <toolkit:SettingsCard Description="{x:Bind ViewModel.AdbPathText, Mode=OneWay}" Header="ADB Executable" />
+                        <toolkit:SettingsCard Description="{x:Bind ViewModel.AdbVersionText, Mode=OneWay}" Header="ADB Version" />
+                    </toolkit:SettingsExpander.Items>
+                </toolkit:SettingsExpander>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

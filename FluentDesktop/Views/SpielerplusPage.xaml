@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="FluentDesktop.Views.SpielerplusPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:FluentDesktop.Helpers"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
+    xmlns:vm="using:FluentDesktop.ViewModels"
+    NavigationCacheMode="Required">
+
+    <Page.Resources>
+        <DataTemplate x:Key="LogLineTemplate" x:DataType="x:String">
+            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind}" />
+        </DataTemplate>
+        <DataTemplate x:Key="MiniLogsTemplate" x:DataType="vm:SpielerplusViewModel">
+            <Border Padding="20" Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="8">
+                    <Grid>
+                        <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" Text="Terminal Output" />
+                        <HyperlinkButton HorizontalAlignment="Right" Click="ClearLogs_Click" Content="Clear" />
+                    </Grid>
+                    <Border Height="180" Padding="12" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
+                        <Grid>
+                            <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="Run a fetch to see pipeline output." Visibility="{x:Bind helpers:Bind.VisibleIfNone(Logs.Count), Mode=OneWay}" />
+                            <ListView
+                                helpers:AutoScroll.IsEnabled="True"
+                                ItemContainerStyle="{StaticResource ConsoleListItemStyle}"
+                                ItemTemplate="{StaticResource LogLineTemplate}"
+                                ItemsSource="{x:Bind Logs}"
+                                SelectionMode="None" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Padding="36,24,36,0">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <FontIcon FontSize="24" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="&#xE787;" />
+                <StackPanel>
+                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="SpielerPlus Fixture Importer" />
+                    <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="Fetch FUSSBALL.DE / DFBnet match plans → SpielerPlus CSV &amp; XLSX" />
+                </StackPanel>
+            </StackPanel>
+            <toolkit:Segmented HorizontalAlignment="Right" VerticalAlignment="Center" SelectedIndex="{x:Bind ViewModel.SourceIndex, Mode=TwoWay}">
+                <toolkit:SegmentedItem Content="FUSSBALL.DE">
+                    <toolkit:SegmentedItem.Icon>
+                        <FontIcon Glyph="&#xE774;" />
+                    </toolkit:SegmentedItem.Icon>
+                </toolkit:SegmentedItem>
+                <toolkit:SegmentedItem Content="DFBnet">
+                    <toolkit:SegmentedItem.Icon>
+                        <FontIcon Glyph="&#xE8D7;" />
+                    </toolkit:SegmentedItem.Icon>
+                </toolkit:SegmentedItem>
+            </toolkit:Segmented>
+        </Grid>
+
+        <SelectorBar x:Name="Tabs" Grid.Row="1" Margin="28,8,28,0" SelectionChanged="Tabs_SelectionChanged">
+            <SelectorBarItem IsSelected="True" Text="Fixtures" />
+            <SelectorBarItem Text="ICS Import" />
+            <SelectorBarItem Text="Logs" />
+        </SelectorBar>
+
+        <ProgressRing Grid.Row="2" IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
+        <ProgressBar Grid.Row="2" VerticalAlignment="Top" IsIndeterminate="True" Visibility="{x:Bind ViewModel.IsRunning, Mode=OneWay}" />
+
+        <!--  Fixtures  -->
+        <ScrollViewer x:Name="FixturesPanel" Grid.Row="2">
+            <StackPanel MaxWidth="960" Padding="{StaticResource PagePadding}" Spacing="16">
+                <Border Padding="20" Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Schedule Parameters" />
+                        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsFussball, Mode=OneWay}">
+                            <TextBox Header="Team Page URL" Text="{x:Bind ViewModel.Config.FussballUrl, Mode=TwoWay}" />
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Header="Date From" PlaceholderText="YYYY-MM-DD" Text="{x:Bind ViewModel.Config.FussballDateFrom, Mode=TwoWay}" />
+                                <TextBox Grid.Column="1" Header="Date To" PlaceholderText="YYYY-MM-DD" Text="{x:Bind ViewModel.Config.FussballDateTo, Mode=TwoWay}" />
+                            </Grid>
+                        </StackPanel>
+                        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsDfbnet, Mode=OneWay}">
+                            <TextBox Header="DFBnet Base URL" Text="{x:Bind ViewModel.Config.DfbnetBaseUrl, Mode=TwoWay}" />
+                            <Grid ColumnSpacing="12" RowSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBox Header="Team Name" Text="{x:Bind ViewModel.Config.DfbnetTeamName, Mode=TwoWay}" />
+                                <TextBox Grid.Column="1" Header="Club ID (optional)" Text="{x:Bind ViewModel.Config.DfbnetClubId, Mode=TwoWay}" />
+                                <TextBox Grid.Row="1" Header="Team Type ID" Text="{x:Bind ViewModel.Config.DfbnetTeamTypeId, Mode=TwoWay}" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Header="Competition Type ID" Text="{x:Bind ViewModel.Config.DfbnetCompetitionTypeId, Mode=TwoWay}" />
+                                <TextBox Grid.Row="2" Header="Date From" PlaceholderText="YYYY-MM-DD" Text="{x:Bind ViewModel.Config.FussballDateFrom, Mode=TwoWay}" />
+                                <TextBox Grid.Row="2" Grid.Column="1" Header="DFBnet Date To" PlaceholderText="YYYY-MM-DD" Text="{x:Bind ViewModel.Config.DfbnetDateTo, Mode=TwoWay}" />
+                            </Grid>
+                        </StackPanel>
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Header="Home Marker" PlaceholderText="Ernst-Reuter-Sportf" Text="{x:Bind ViewModel.Config.HomeMarker, Mode=TwoWay}" />
+                            <TextBox Grid.Column="1" Header="Output Dir" Text="{x:Bind ViewModel.Config.OutputDir, Mode=TwoWay}" />
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Click="Fetch_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsRunning), Mode=OneWay}" Style="{StaticResource AccentButtonStyle}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE896;" />
+                                    <TextBlock Text="{x:Bind ViewModel.FetchLabel, Mode=OneWay}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="Probe_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsRunning), Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE721;" />
+                                    <TextBlock Text="Check Existing" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="Participation_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsRunning), Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE9D2;" />
+                                    <TextBlock Text="Export Participation" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <InfoBar IsClosable="False" IsOpen="{x:Bind ViewModel.PipelineMissing, Mode=OneWay}" Message="{x:Bind ViewModel.PipelineMessage, Mode=OneWay}" Severity="Error" />
+                    </StackPanel>
+                </Border>
+
+                <!--  Last export  -->
+                <Border Padding="20" Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.HasResult, Mode=OneWay}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Last Export" />
+                        <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
+                        <StackPanel Visibility="{x:Bind ViewModel.HasCsv, Mode=OneWay}">
+                            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind ViewModel.CsvLine, Mode=OneWay}" />
+                            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind ViewModel.XlsxLine, Mode=OneWay}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Click="OpenImport_Click" Content="Open SpielerPlus Import" />
+                            <Button Click="OpenCsv_Click" Content="Open CSV" Visibility="{x:Bind ViewModel.HasCsv, Mode=OneWay}" />
+                            <Button Click="OpenXlsx_Click" Content="Open XLSX" Visibility="{x:Bind ViewModel.HasCsv, Mode=OneWay}" />
+                            <Button Click="OpenFolder_Click" Content="Open Folder" />
+                            <HyperlinkButton Click="CopyCsv_Click" Content="Copy CSV Path" Visibility="{x:Bind ViewModel.HasCsv, Mode=OneWay}" />
+                            <HyperlinkButton Click="CopyXlsx_Click" Content="Copy XLSX Path" Visibility="{x:Bind ViewModel.HasCsv, Mode=OneWay}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!--  Fixtures table  -->
+                <Border Padding="20" Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <Grid>
+                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Upcoming Fixtures" />
+                            <Border HorizontalAlignment="Right" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Style="{StaticResource PillBorderStyle}">
+                                <TextBlock FontSize="11" FontWeight="SemiBold" Text="{x:Bind ViewModel.FixtureCount, Mode=OneWay}" />
+                            </Border>
+                        </Grid>
+                        <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="No fixtures yet. Run a fetch to preview the match plan here." Visibility="{x:Bind ViewModel.NoFixtures, Mode=OneWay}" />
+                        <Grid Padding="8,0" ColumnSpacing="12" Visibility="{x:Bind helpers:Bind.Collapsed(ViewModel.NoFixtures), Mode=OneWay}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock FontWeight="SemiBold" Text="Date" />
+                            <TextBlock Grid.Column="1" FontWeight="SemiBold" Text="Type" />
+                            <TextBlock Grid.Column="2" FontWeight="SemiBold" Text="Matchup" />
+                            <TextBlock Grid.Column="3" FontWeight="SemiBold" Text="Venue" />
+                        </Grid>
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Fixtures}">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:FixtureRow">
+                                    <Grid Padding="8,8" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="110" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Text="{x:Bind Date}" />
+                                            <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Time}" />
+                                        </StackPanel>
+                                        <Border Grid.Column="1" HorizontalAlignment="Left" BorderBrush="{x:Bind TypeBrush}" Style="{StaticResource PillBorderStyle}">
+                                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{x:Bind TypeBrush}" Text="{x:Bind Type}" />
+                                        </Border>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock FontSize="12" FontWeight="SemiBold" Text="{x:Bind Matchup}" TextWrapping="Wrap" />
+                                            <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Competition}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="3" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Venue}" TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </StackPanel>
+                </Border>
+
+                <ContentControl HorizontalContentAlignment="Stretch" Content="{x:Bind ViewModel}" ContentTemplate="{StaticResource MiniLogsTemplate}" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  ICS import  -->
+        <ScrollViewer x:Name="IcsPanel" Grid.Row="2" Visibility="Collapsed">
+            <StackPanel MaxWidth="960" Padding="{StaticResource PagePadding}" Spacing="16">
+                <Border Padding="20" Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="ICS → SpielerPlus Pipeline" />
+                        <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="Mirrors run_import.py: fetch ICS → probe existing → create missing." />
+                        <TextBox Header="ICS Feed URL" PlaceholderText="https://calendar.google.com/.../basic.ics" Text="{x:Bind ViewModel.Config.IcsUrl, Mode=TwoWay}" />
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Header="From Date" PlaceholderText="YYYY-MM-DD (optional)" Text="{x:Bind ViewModel.Config.IcsFromDate, Mode=TwoWay}" />
+                            <TextBox Grid.Column="1" Header="Include Kinds" PlaceholderText="game,birthday,event" Text="{x:Bind ViewModel.Config.IcsInclude, Mode=TwoWay}" />
+                            <TextBox Grid.Column="2" Header="Team Hint" PlaceholderText="FC Hertha 03" Text="{x:Bind ViewModel.Config.IcsTeamHint, Mode=TwoWay}" />
+                        </Grid>
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Header="Browser Session" Text="{x:Bind ViewModel.Config.BrowserSession, Mode=TwoWay}" />
+                            <TextBox Grid.Column="1" Header="Chrome Profile" Text="{x:Bind ViewModel.Config.BrowserProfile, Mode=TwoWay}" />
+                            <TextBox Grid.Column="2" Header="Participation URL" Text="{x:Bind ViewModel.Config.ParticipationUrl, Mode=TwoWay}" />
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="24">
+                            <CheckBox Content="Dry run" IsChecked="{x:Bind ViewModel.DryRun, Mode=TwoWay}" />
+                            <CheckBox Content="Headed browser" IsChecked="{x:Bind ViewModel.Headed, Mode=TwoWay}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Click="FetchIcs_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsRunning), Mode=OneWay}" Style="{StaticResource AccentButtonStyle}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE787;" />
+                                    <TextBlock Text="Fetch ICS Events" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="Probe_Click" Content="Probe Existing" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsRunning), Mode=OneWay}" />
+                            <Button Click="Import_Click" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsRunning), Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE768;" />
+                                    <TextBlock Text="{x:Bind ViewModel.ImportLabel, Mode=OneWay}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="Participation_Click" Content="Export Participation" IsEnabled="{x:Bind helpers:Bind.Not(ViewModel.IsRunning), Mode=OneWay}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <ContentControl HorizontalContentAlignment="Stretch" Content="{x:Bind ViewModel}" ContentTemplate="{StaticResource MiniLogsTemplate}" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  Logs  -->
+        <Grid x:Name="LogsPanel" Grid.Row="2" MaxWidth="960" Padding="{StaticResource PagePadding}" RowSpacing="12" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid>
+                <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" Text="Terminal Output" />
+                <HyperlinkButton HorizontalAlignment="Right" Click="ClearLogs_Click" Content="Clear" />
+            </Grid>
+            <Border Grid.Row="1" Padding="12" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
+                <Grid>
+                    <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="No output yet." Visibility="{x:Bind helpers:Bind.VisibleIfNone(ViewModel.Logs.Count), Mode=OneWay}" />
+                    <ListView
+                        helpers:AutoScroll.IsEnabled="True"
+                        ItemContainerStyle="{StaticResource ConsoleListItemStyle}"
+                        ItemTemplate="{StaticResource LogLineTemplate}"
+                        ItemsSource="{x:Bind ViewModel.Logs}"
+                        SelectionMode="None" />
+                </Grid>
+            </Border>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+                <Button Click="CopyLogs_Click" Content="Copy Logs" />
+                <Button Click="OpenCsv_Click" Content="Open CSV" IsEnabled="{x:Bind ViewModel.HasCsv, Mode=OneWay}" />
+                <Button Click="OpenFolder_Click" Content="Open Output Dir" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>
