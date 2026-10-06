@@ -69,7 +69,7 @@
                     <InfoBar.Content>
                         <StackPanel Margin="0,0,0,12" Spacing="8">
                             <Border Padding="10" Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="4">
-                                <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind ViewModel.InstallInstructions}" />
+                                <TextBlock Style="{StaticResource DetailCaptionStyle}" Text="{x:Bind ViewModel.InstallInstructions}" />
                             </Border>
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <Button Click="CopyInstall_Click" Content="Copy Install Command" />
@@ -88,7 +88,7 @@
                         <TextBlock HorizontalAlignment="Center" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind ViewModel.EmptyText, Mode=OneWay}" TextAlignment="Center" />
                         <InfoBar IsClosable="False" IsOpen="{x:Bind views:ScrcpyBind.HasText(ViewModel.ScanError), Mode=OneWay}" Message="{x:Bind ViewModel.ScanError, Mode=OneWay}" Severity="Error" />
                         <Border Padding="16,8" HorizontalAlignment="Center" Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="6" Visibility="{x:Bind ViewModel.HasScanned, Mode=OneWay}">
-                            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="adb tcpip 5555  •  adb connect &lt;ip_address&gt;:5555" />
+                            <TextBlock Style="{StaticResource DetailCaptionStyle}" Text="adb tcpip 5555  •  adb connect &lt;ip_address&gt;:5555" />
                         </Border>
                         <Button HorizontalAlignment="Center" Click="Refresh_Click" Content="Scan for Devices" Style="{StaticResource AccentButtonStyle}" Visibility="{x:Bind helpers:Bind.Collapsed(ViewModel.HasScanned), Mode=OneWay}" />
                     </StackPanel>
@@ -123,7 +123,7 @@
                                                     <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" Text="Selected" />
                                                 </Border>
                                             </StackPanel>
-                                            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind SerialText}" />
+                                            <TextBlock Style="{StaticResource DetailCaptionStyle}" Text="{x:Bind SerialText}" />
                                             <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Details}" />
                                         </StackPanel>
                                         <Border Grid.Column="2" Padding="8,4" Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="6" Visibility="{x:Bind HasBattery}">

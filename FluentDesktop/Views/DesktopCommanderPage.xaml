@@ -86,7 +86,7 @@
                     </StackPanel>
                     <StackPanel Visibility="{x:Bind helpers:Bind.VisibleIfNotNull(ViewModel.DeviceId), Mode=OneWay}">
                         <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="Device ID" />
-                        <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind ViewModel.DeviceId, Mode=OneWay}" />
+                        <TextBlock Style="{StaticResource DetailCaptionStyle}" Text="{x:Bind ViewModel.DeviceId, Mode=OneWay}" />
                     </StackPanel>
                 </StackPanel>
             </Border>

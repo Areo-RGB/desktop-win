@@ -129,7 +129,6 @@ public sealed partial class GithubPage : Page
             Content = new TextBlock
             {
                 Text = string.Join('\n', names.Select(n => $"• {n}")),
-                FontFamily = (FontFamily)Application.Current.Resources["MonoFont"],
                 FontSize = 12,
             },
         });
@@ -143,7 +142,7 @@ public sealed partial class GithubPage : Page
     private async Task RunBatchAsync(GithubBatchAction action, int total)
     {
         var status = new TextBlock { Text = $"Processing 0 of {total}..." };
-        var current = new TextBlock { FontFamily = (FontFamily)Application.Current.Resources["MonoFont"], FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
+        var current = new TextBlock { FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
         var bar = new ProgressBar { Maximum = Math.Max(1, total) };
         var log = new StackPanel { Spacing = 2 };
         var panel = new StackPanel { Spacing = 8, Width = 500 };
@@ -175,7 +174,6 @@ public sealed partial class GithubPage : Page
                 log.Children.Add(new TextBlock
                 {
                     Text = $"{(r.Success ? "✓" : "✗")} {r.NameWithOwner}: {r.Message}",
-                    FontFamily = (FontFamily)Application.Current.Resources["MonoFont"],
                     FontSize = 11,
                     TextWrapping = TextWrapping.Wrap,
                     Foreground = r.Success ? (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"] : Bind.Danger,

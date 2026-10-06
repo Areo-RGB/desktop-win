@@ -11,7 +11,7 @@
 
     <Page.Resources>
         <DataTemplate x:Key="LogLineTemplate" x:DataType="x:String">
-            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind}" />
+            <TextBlock Style="{StaticResource DetailCaptionStyle}" Text="{x:Bind}" />
         </DataTemplate>
         <DataTemplate x:Key="MiniLogsTemplate" x:DataType="vm:SpielerplusViewModel">
             <Border Padding="20" Style="{StaticResource CardStyle}">
@@ -150,8 +150,8 @@
                         <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Last Export" />
                         <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
                         <StackPanel Visibility="{x:Bind ViewModel.HasCsv, Mode=OneWay}">
-                            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind ViewModel.CsvLine, Mode=OneWay}" />
-                            <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind ViewModel.XlsxLine, Mode=OneWay}" />
+                            <TextBlock Style="{StaticResource DetailCaptionStyle}" Text="{x:Bind ViewModel.CsvLine, Mode=OneWay}" />
+                            <TextBlock Style="{StaticResource DetailCaptionStyle}" Text="{x:Bind ViewModel.XlsxLine, Mode=OneWay}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button Click="OpenImport_Click" Content="Open SpielerPlus Import" />
@@ -197,7 +197,7 @@
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
-                                            <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Text="{x:Bind Date}" />
+                                            <TextBlock FontSize="12" FontWeight="SemiBold" Text="{x:Bind Date}" />
                                             <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Time}" />
                                         </StackPanel>
                                         <Border Grid.Column="1" HorizontalAlignment="Left" BorderBrush="{x:Bind TypeBrush}" Style="{StaticResource PillBorderStyle}">

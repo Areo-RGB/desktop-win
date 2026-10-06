@@ -30,7 +30,6 @@
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
-    <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
     <x:Double x:Key="PageMaxWidth">1100</x:Double>
     <Thickness x:Key="PagePadding">36,24,36,36</Thickness>
     <x:Double x:Key="SettingsCardSpacing">4</x:Double>
@@ -55,16 +54,14 @@
     </Style>
 
     <Style x:Key="ConsoleTextStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Foreground" Value="{ThemeResource ConsoleTextBrush}" />
         <Setter Property="TextWrapping" Value="Wrap" />
         <Setter Property="IsTextSelectionEnabled" Value="True" />
     </Style>
 
-    <Style x:Key="MonoCaptionStyle" TargetType="TextBlock">
+    <Style x:Key="DetailCaptionStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
         <Setter Property="IsTextSelectionEnabled" Value="True" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>

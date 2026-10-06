@@ -199,7 +199,7 @@
                 <Button Grid.Column="2" Click="WebHome_Click" Style="{StaticResource SubtleButtonStyle}" ToolTipService.ToolTip="Dashboard home">
                     <FontIcon FontSize="14" Glyph="&#xE80F;" />
                 </Button>
-                <TextBlock Grid.Column="3" Margin="8,0" VerticalAlignment="Center" Style="{StaticResource MonoCaptionStyle}" Text="{x:Bind ViewModel.DashboardUrl, Mode=OneWay}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                <TextBlock Grid.Column="3" Margin="8,0" VerticalAlignment="Center" Style="{StaticResource DetailCaptionStyle}" Text="{x:Bind ViewModel.DashboardUrl, Mode=OneWay}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                 <HyperlinkButton Grid.Column="4" Click="OpenDashboard_Click" Content="Open in Browser" />
             </Grid>
             <ProgressBar x:Name="WebProgress" Grid.Row="1" VerticalAlignment="Top" IsIndeterminate="True" Visibility="Collapsed" />

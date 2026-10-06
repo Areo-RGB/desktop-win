@@ -167,7 +167,7 @@
                                     <CheckBox MinWidth="0" Click="RepoCheck_Click" IsChecked="{x:Bind IsSelected, Mode=OneWay}" Tag="{x:Bind}" />
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <TextBlock FontFamily="{StaticResource MonoFont}" FontWeight="Bold" Text="{x:Bind NameWithOwner}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock FontWeight="Bold" Text="{x:Bind NameWithOwner}" TextTrimming="CharacterEllipsis" />
                                             <Border Padding="6,1" BorderBrush="{x:Bind BadgeBrush}" Style="{StaticResource PillBorderStyle}">
                                                 <TextBlock FontSize="9" FontWeight="Bold" Foreground="{x:Bind BadgeBrush}" Text="{x:Bind Badge}" />
                                             </Border>
@@ -261,7 +261,7 @@
                                 <FontIcon FontSize="20" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="&#xE710;" />
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Create new repository" />
-                                    <TextBlock Style="{StaticResource MonoCaptionStyle}" Text="Runs `gh repo create`" />
+                                    <TextBlock Style="{StaticResource DetailCaptionStyle}" Text="Runs `gh repo create`" />
                                 </StackPanel>
                             </StackPanel>
                             <TextBox x:Name="CreateName" Header="Repository name *" PlaceholderText="e.g. my-awesome-app" />
@@ -306,7 +306,7 @@
                             </Button>
                             <InfoBar x:Name="CreateResult" IsClosable="True" IsOpen="False">
                                 <InfoBar.Content>
-                                    <TextBlock x:Name="CreateResultLogs" Margin="0,0,0,12" Style="{StaticResource MonoCaptionStyle}" />
+                                    <TextBlock x:Name="CreateResultLogs" Margin="0,0,0,12" Style="{StaticResource DetailCaptionStyle}" />
                                 </InfoBar.Content>
                             </InfoBar>
                         </StackPanel>
@@ -362,7 +362,7 @@
                                 <AutoSuggestBox.ItemTemplate>
                                     <DataTemplate x:DataType="vm:GithubRepoItem">
                                         <StackPanel Padding="0,4">
-                                            <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="13" Text="{x:Bind NameWithOwner}" />
+                                            <TextBlock FontSize="13" Text="{x:Bind NameWithOwner}" />
                                             <TextBlock MaxLines="1" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Pushed}" TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
                                     </DataTemplate>
@@ -393,7 +393,7 @@
                             </Button>
                             <InfoBar x:Name="ConnectResult" IsClosable="True" IsOpen="False">
                                 <InfoBar.Content>
-                                    <TextBlock x:Name="ConnectResultLogs" Margin="0,0,0,12" Style="{StaticResource MonoCaptionStyle}" />
+                                    <TextBlock x:Name="ConnectResultLogs" Margin="0,0,0,12" Style="{StaticResource DetailCaptionStyle}" />
                                 </InfoBar.Content>
                             </InfoBar>
                         </StackPanel>
