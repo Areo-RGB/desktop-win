@@ -3,12 +3,14 @@
     x:Class="FluentDesktop.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FluentDesktop.Controls"
     xmlns:helpers="using:FluentDesktop.Helpers"
     xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
     NavigationCacheMode="Required">
 
     <ScrollViewer>
-        <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="{StaticResource PagePadding}" Spacing="{StaticResource SettingsCardSpacing}">
+        <controls:CenteredColumn MaxContentWidth="{StaticResource PageMaxWidth}">
+        <StackPanel Padding="{StaticResource PagePadding}" Spacing="{StaticResource SettingsCardSpacing}">
             <TextBlock Margin="0,0,0,8" Style="{StaticResource TitleTextBlockStyle}" Text="Settings" />
 
             <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Appearance &amp; Theme" />
@@ -71,5 +73,6 @@
                 </toolkit:SettingsExpander.Items>
             </toolkit:SettingsExpander>
         </StackPanel>
+        </controls:CenteredColumn>
     </ScrollViewer>
 </Page>

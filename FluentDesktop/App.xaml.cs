@@ -13,6 +13,9 @@ public partial class App : Application
         Environment.SetEnvironmentVariable(
             "WEBVIEW2_USER_DATA_FOLDER",
             Path.Combine(AppPaths.LocalAppData, "FluentDesktop", "WebView2"));
+        // The UI is English; without this, WinUI's built-in strings (Settings
+        // item, pane toggle tooltip, dialogs) follow the Windows display language.
+        Microsoft.Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "en-US";
         InitializeComponent();
         UnhandledException += (_, e) =>
         {

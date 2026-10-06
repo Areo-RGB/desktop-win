@@ -16,6 +16,7 @@
 
         <TitleBar
             x:Name="AppTitleBar"
+            Height="48"
             Title="Fluent Desktop"
             IsBackButtonVisible="False"
             IsPaneToggleButtonVisible="True"
