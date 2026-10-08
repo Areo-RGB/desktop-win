@@ -320,6 +320,9 @@
                 <toolkit:SettingsCard Header="Video Codec">
                     <ComboBox x:Name="CodecBox" MinWidth="240" SelectionChanged="Codec_Changed" />
                 </toolkit:SettingsCard>
+                <toolkit:SettingsCard Description="Decode the video stream on the GPU (scrcpy 5, --hwdec)" Header="Hardware Decoding">
+                    <ComboBox x:Name="HwDecBox" MinWidth="240" SelectionChanged="HwDec_Changed" />
+                </toolkit:SettingsCard>
 
                 <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Window &amp; Behavior Switches" />
                 <toolkit:SettingsCard Description="Keeps device display active and prevents sleep (--stay-awake)" Header="Stay Awake while Mirroring">

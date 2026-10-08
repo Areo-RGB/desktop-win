@@ -31,6 +31,8 @@ public sealed class ScrcpyConfig
     public int MaxSize { get; set; } = 1080;       // 0 = original
     public string BitRate { get; set; } = "8M";
     public string VideoCodec { get; set; } = "h264";
+    /// <summary>scrcpy 5 <c>--hwdec</c> mode: auto (GPU decode, software fallback), d3d11va or disabled.</summary>
+    public string HwDec { get; set; } = "auto";
     public bool Borderless { get; set; }
     public bool AlwaysOnTop { get; set; }
     public bool Fullscreen { get; set; }
@@ -58,6 +60,7 @@ public sealed class ScrcpyConfig
         if (MaxSize > 0) args.AddRange(["-m", $"{MaxSize}"]);
         if (BitRate.Length > 0) args.AddRange(["-b", BitRate]);
         if (VideoCodec.Length > 0) args.Add($"--video-codec={VideoCodec}");
+        if (HwDec.Length > 0) args.Add($"--hwdec={HwDec}");
         if (RecordVideo && recordPath != null) args.AddRange(["--record", recordPath]);
         return args;
     }

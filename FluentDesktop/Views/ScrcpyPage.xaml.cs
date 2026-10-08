@@ -24,6 +24,9 @@ public sealed partial class ScrcpyPage : Page
     private static readonly (string Label, string Value)[] Codecs =
         [("H.264 / AVC (Most Compatible)", "h264"), ("H.265 / HEVC (High Efficiency)", "h265"), ("AV1", "av1")];
 
+    private static readonly (string Label, string Value)[] HwDecModes =
+        [("Auto (GPU, software fallback)", "auto"), ("Direct3D 11 (d3d11va)", "d3d11va"), ("Disabled (software)", "disabled")];
+
     private readonly ConditionalWeakTable<DeviceItem, ScrollViewer> _zoomViewers = new();
 
     public ScrcpyPage()
@@ -34,6 +37,7 @@ public sealed partial class ScrcpyPage : Page
         Fill(MaxFpsBox, Fps.Select(m => m.Label), Array.FindIndex(Fps, m => m.Value == cfg.MaxFps));
         Fill(BitRateBox, BitRates.Select(m => m.Label), Array.FindIndex(BitRates, m => m.Value == cfg.BitRate));
         Fill(CodecBox, Codecs.Select(m => m.Label), Array.FindIndex(Codecs, m => m.Value == cfg.VideoCodec));
+        Fill(HwDecBox, HwDecModes.Select(m => m.Label), Array.FindIndex(HwDecModes, m => m.Value == cfg.HwDec));
         // Lazy: no ADB call until Refresh; only probe whether the binaries exist.
         Loaded += async (_, _) =>
         {
@@ -53,6 +57,8 @@ public sealed partial class ScrcpyPage : Page
     private void MaxFps_Changed(object sender, SelectionChangedEventArgs e) => ViewModel.Config.MaxFps = Fps[Math.Max(0, MaxFpsBox.SelectedIndex)].Value;
     private void BitRate_Changed(object sender, SelectionChangedEventArgs e) => ViewModel.Config.BitRate = BitRates[Math.Max(0, BitRateBox.SelectedIndex)].Value;
     private void Codec_Changed(object sender, SelectionChangedEventArgs e) => ViewModel.Config.VideoCodec = Codecs[Math.Max(0, CodecBox.SelectedIndex)].Value;
+
+    private void HwDec_Changed(object sender, SelectionChangedEventArgs e) => ViewModel.Config.HwDec = HwDecModes[Math.Max(0, HwDecBox.SelectedIndex)].Value;
 
     private void Tabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {

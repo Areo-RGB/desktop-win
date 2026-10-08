@@ -143,7 +143,7 @@ public class AdbTests
     {
         var cfg = new ScrcpyConfig { AlwaysOnTop = true, MaxFps = 0, RecordVideo = true };
         Assert.Equal(
-            ["-s", "abc", "--window-title", "SCRCPY — abc", "--always-on-top", "--stay-awake", "-m", "1080", "-b", "8M", "--video-codec=h264", "--record", "out.mp4"],
+            ["-s", "abc", "--window-title", "SCRCPY — abc", "--always-on-top", "--stay-awake", "-m", "1080", "-b", "8M", "--video-codec=h264", "--hwdec=auto", "--record", "out.mp4"],
             cfg.ToArgs("abc", "out.mp4"));
     }
 }

@@ -61,7 +61,24 @@ public static partial class AdbService
         var env = Environment.GetEnvironmentVariable("SCRCPY");
         if (!string.IsNullOrWhiteSpace(env) && File.Exists(env)) return env;
         var exe = OperatingSystem.IsWindows() ? "scrcpy.exe" : "scrcpy";
-        return ExecutableResolver.Resolve(exe) ?? exe;
+        return NewestUnpackedScrcpy(exe) ?? ExecutableResolver.Resolve(exe) ?? exe;
+    }
+
+    /// <summary>Newest "scrcpy-win64-v*" folder in Documents (scrcpy 5+ has --hwdec; PATH installs may be older).</summary>
+    private static string? NewestUnpackedScrcpy(string exe)
+    {
+        if (!OperatingSystem.IsWindows()) return null;
+        try
+        {
+            var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            return Directory.EnumerateDirectories(docs, "scrcpy-win64-v*")
+                .Select(d => (Dir: d, Ver: Version.TryParse(Path.GetFileName(d)["scrcpy-win64-v".Length..], out var v) ? v : null))
+                .Where(x => x.Ver != null && File.Exists(Path.Combine(x.Dir, exe)))
+                .OrderByDescending(x => x.Ver)
+                .Select(x => Path.Combine(x.Dir, exe))
+                .FirstOrDefault();
+        }
+        catch { return null; }
     }
 
     /// <summary>Child environment with ADB set and its directory on PATH (scrcpy needs it).</summary>
