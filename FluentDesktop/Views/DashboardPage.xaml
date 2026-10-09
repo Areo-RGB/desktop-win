@@ -38,6 +38,11 @@
         <ProgressRing Grid.Row="1" IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
 
         <Grid Grid.Row="1" ColumnSpacing="16" Visibility="{x:Bind helpers:Bind.Collapsed(ViewModel.IsLoading), Mode=OneWay}">
+            <Grid.Transitions>
+                <TransitionCollection>
+                    <EntranceThemeTransition FromVerticalOffset="12" />
+                </TransitionCollection>
+            </Grid.Transitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="320" />
                 <ColumnDefinition Width="*" />
@@ -46,7 +51,7 @@
             <!--  Command list  -->
             <ScrollViewer>
                 <StackPanel Spacing="8">
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Commands}">
+                    <ItemsRepeater helpers:Motion.StaggerIn="True" ItemsSource="{x:Bind ViewModel.Commands}">
                         <ItemsRepeater.Layout>
                             <StackLayout Spacing="8" />
                         </ItemsRepeater.Layout>

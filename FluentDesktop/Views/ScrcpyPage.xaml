@@ -95,7 +95,7 @@
                 </Border>
 
                 <!--  Device cards  -->
-                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Devices}">
+                <ItemsRepeater helpers:Motion.StaggerIn="True" ItemsSource="{x:Bind ViewModel.Devices}">
                     <ItemsRepeater.Layout>
                         <StackLayout Spacing="14" />
                     </ItemsRepeater.Layout>
@@ -346,7 +346,7 @@
 
                 <StackPanel Spacing="{StaticResource SettingsCardSpacing}" Visibility="{x:Bind ViewModel.HasRunning, Mode=OneWay}">
                     <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Active Running Scrcpy Instances" />
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Running}">
+                    <ItemsRepeater helpers:Motion.StaggerIn="True" ItemsSource="{x:Bind ViewModel.Running}">
                         <ItemsRepeater.Layout>
                             <StackLayout Spacing="4" />
                         </ItemsRepeater.Layout>

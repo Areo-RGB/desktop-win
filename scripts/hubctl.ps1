@@ -17,7 +17,8 @@ param([string]$Action)
 $ErrorActionPreference = 'Stop'
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
-$HubDir = Join-Path $ProjectRoot 'servers\mcphub_fork'
+$HubDir = if ($env:MCPHUB_DIR) { $env:MCPHUB_DIR } `
+  else { Join-Path $(if ($env:MCP_HUB_ROOT) { $env:MCP_HUB_ROOT } else { Join-Path $HOME 'Projects\mcp-hub' }) 'mcphub_fork' }
 $Port = if ($env:PORT) { [int]$env:PORT } else { 3000 }
 $LogFile = Join-Path ([System.IO.Path]::GetTempPath()) 'mcphub.log'
 $PidFile = Join-Path ([System.IO.Path]::GetTempPath()) 'mcphub.pid'
@@ -112,7 +113,7 @@ switch ($Action) {
     Write-Trace 'action start-hub enter'
     if (Test-PortOpen) { Write-Output "hub already listening on :$Port"; break }
     $entry = Join-Path $HubDir 'dist\index.js'
-    if (-not (Test-Path $entry)) { throw "missing $entry - run: pnpm --dir servers\mcphub_fork build" }
+    if (-not (Test-Path $entry)) { throw "missing $entry - run: pnpm --dir <mcp-hub>\mcphub_fork build" }
     $env:PORT = "$Port"
     $ErrFile = "$LogFile.err"
     $proc = Start-Process -FilePath 'node' -ArgumentList 'dist\index.js' -WorkingDirectory $HubDir `
@@ -165,7 +166,10 @@ switch ($Action) {
     & $MyInvocation.MyCommand.Path 'stop-hub'
     & $MyInvocation.MyCommand.Path 'stop-tunnel'
   }
-  'start-ssh' { Write-Output 'ssh daemon not managed on Windows; skipping' }
+  'start-ssh' {
+    & (Join-Path $ScriptDir 'start-ssh.ps1')
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  }
   'status' {
     if (Test-PortOpen) { Write-Output "hub UP on :$Port" }
     else { Write-Output 'hub DOWN'; exit 1 }

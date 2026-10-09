@@ -15,7 +15,8 @@ public sealed record HubStatus(
     string DashboardUrl,
     string LocalMcpUrl,
     string LocalSshMcpUrl,
-    string PublicMcpUrl);
+    string PublicMcpUrl,
+    string SshTarget = "127.0.0.1:22");
 
 /// <summary>
 /// Controls the local MCPHub server, the Cloudflare tunnel and the SSH MCP
@@ -46,7 +47,7 @@ public sealed partial class HubService
                 if (IsHubCheckout(dir.FullName)) return dir.FullName;
             }
 
-            foreach (var name in new[] { "desktop-win", "flutter-desktop" })
+            foreach (var name in new[] { "winui", "desktop-win", "flutter-desktop" })
             {
                 var fallback = Path.Combine(AppPaths.Home, "Projects", name);
                 if (IsHubCheckout(fallback)) return fallback;
@@ -57,14 +58,19 @@ public sealed partial class HubService
 
     private static bool IsHubCheckout(string dir) =>
         File.Exists(Path.Combine(dir, "scripts", "hubctl.ps1")) ||
-        File.Exists(Path.Combine(dir, "scripts", "hubctl.sh")) ||
-        Directory.Exists(Path.Combine(dir, "servers", "mcphub_fork"));
+        File.Exists(Path.Combine(dir, "scripts", "hubctl.sh"));
+
+    /// <summary>Shared hub project (mcphub_fork + ssh-mcp), used by both the WinUI and Flutter apps.</summary>
+    public static string HubRoot =>
+        Environment.GetEnvironmentVariable("MCP_HUB_ROOT") ?? Path.Combine(AppPaths.Home, "Projects", "mcp-hub");
 
     public static string McphubDir =>
-        Environment.GetEnvironmentVariable("MCPHUB_DIR") ?? Path.Combine(ProjectRoot, "servers", "mcphub_fork");
+        Environment.GetEnvironmentVariable("MCPHUB_DIR") ?? Path.Combine(HubRoot, "mcphub_fork");
 
     public static string SshMcpDir =>
-        Environment.GetEnvironmentVariable("SSH_MCP_DIR") ?? Path.Combine(ProjectRoot, "servers", "ssh-mcp");
+        Environment.GetEnvironmentVariable("SSH_MCP_DIR") ?? Path.Combine(HubRoot, "ssh-mcp");
+
+    public SshMcpSettingsStore SshSettings => new(McphubDir, SshMcpDir);
 
     public static string TempLogPath(string name) => AppPaths.TempFile(name);
 
@@ -106,13 +112,13 @@ public sealed partial class HubService
         if (!result.Ok) throw new InvalidOperationException($"hubctl.sh {action} failed ({result.ExitCode}): {result.CombinedOutput}");
     }
 
-    public static async Task<bool> IsPortOpenAsync(int port, int timeoutMs = 600)
+    public static async Task<bool> IsPortOpenAsync(int port, int timeoutMs = 600, string host = "127.0.0.1")
     {
         try
         {
             using var client = new TcpClient();
             using var cts = new CancellationTokenSource(timeoutMs);
-            await client.ConnectAsync("127.0.0.1", port, cts.Token).ConfigureAwait(false);
+            await client.ConnectAsync(host, port, cts.Token).ConfigureAwait(false);
             return true;
         }
         catch
@@ -148,6 +154,8 @@ public sealed partial class HubService
 
     public async Task<string> ReadSshPasswordAsync()
     {
+        if (File.Exists(SshSettings.SettingsPath))
+            return (await SshSettings.LoadAsync().ConfigureAwait(false)).Password;
         try
         {
             foreach (var file in new[] { Path.Combine(McphubDir, "data", "mcp_settings.dev.json"), Path.Combine(McphubDir, "mcp_settings.json") })
@@ -172,9 +180,10 @@ public sealed partial class HubService
 
     public async Task<HubStatus> GetStatusAsync()
     {
+        var settings = await SshSettings.LoadAsync().ConfigureAwait(false);
         var backend = IsPortOpenAsync(Port);
         var tunnel = IsTunnelRunningAsync();
-        var ssh = IsPortOpenAsync(22);
+        var ssh = IsPortOpenAsync(settings.Port, host: settings.Host);
         var password = ReadSshPasswordAsync();
         await Task.WhenAll(backend, tunnel, ssh, password).ConfigureAwait(false);
         return new HubStatus(
@@ -182,13 +191,15 @@ public sealed partial class HubService
             $"http://localhost:{Port}",
             $"http://localhost:{Port}/mcp",
             $"http://localhost:{Port}/mcp/ssh-mcp",
-            PublicTunnelUrl);
+            PublicTunnelUrl, $"{settings.Host}:{settings.Port}");
     }
 
     public async Task StartSshDaemonAsync()
     {
-        // The SSH daemon is a Linux/systemd service; Windows uses OpenSSH Server.
-        if (OperatingSystem.IsWindows() || await IsPortOpenAsync(22).ConfigureAwait(false)) return;
+        var settings = await SshSettings.LoadAsync().ConfigureAwait(false);
+        if (await IsPortOpenAsync(settings.Port, host: settings.Host).ConfigureAwait(false)) return;
+        if (settings.Host is not ("127.0.0.1" or "localhost" or "::1"))
+            throw new InvalidOperationException("Start SSH on the remote host, then use Test SSH to check the connection.");
         await HubCtlAsync("start-ssh").ConfigureAwait(false);
         await Task.Delay(800).ConfigureAwait(false);
     }
@@ -232,18 +243,18 @@ public sealed partial class HubService
     }
 
     /// <summary>Reads the SSH banner on :22 to verify the daemon answers.</summary>
-    public static async Task<string> TestSshConnectionAsync(int sshPort = 22)
+    public static async Task<string> TestSshConnectionAsync(int sshPort = 22, string host = "127.0.0.1")
     {
         try
         {
             using var client = new TcpClient();
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(4));
-            await client.ConnectAsync("127.0.0.1", sshPort, cts.Token).ConfigureAwait(false);
+            await client.ConnectAsync(host, sshPort, cts.Token).ConfigureAwait(false);
             var buffer = new byte[256];
             var read = await client.GetStream().ReadAsync(buffer, cts.Token).ConfigureAwait(false);
             var banner = Encoding.UTF8.GetString(buffer, 0, read).Split('\n')[0].Trim();
             return banner.StartsWith("SSH-", StringComparison.Ordinal)
-                ? $"SSH OK on :{sshPort} — {banner}"
+                ? $"SSH OK on {host}:{sshPort} — {banner}"
                 : $"Port {sshPort} answered but sent no SSH banner: {banner}";
         }
         catch (OperationCanceledException)
@@ -252,7 +263,7 @@ public sealed partial class HubService
         }
         catch (Exception e)
         {
-            return $"SSH connection to :{sshPort} failed ({e.Message})";
+            return $"SSH connection to {host}:{sshPort} failed ({e.Message})";
         }
     }
 

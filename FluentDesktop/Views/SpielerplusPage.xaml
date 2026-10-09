@@ -186,7 +186,7 @@
                             <TextBlock Grid.Column="2" FontWeight="SemiBold" Text="Matchup" />
                             <TextBlock Grid.Column="3" FontWeight="SemiBold" Text="Venue" />
                         </Grid>
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Fixtures}">
+                        <ItemsRepeater helpers:Motion.StaggerIn="True" ItemsSource="{x:Bind ViewModel.Fixtures}">
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="vm:FixtureRow">
                                     <Grid Padding="8,8" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" ColumnSpacing="12">

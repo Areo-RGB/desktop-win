@@ -19,7 +19,9 @@ Layout and controls follow [microsoft/WinUI-Gallery](https://github.com/microsof
     Settings/                theme / backdrop preferences
   FluentDesktop.Core.Tests/  xUnit tests for the backend (run on any OS)
   FluentDesktop/             WinUI 3 app (unpackaged, self-contained)
-scripts/hubctl.ps1           Hub control script (expects servers\mcphub_fork, not versioned)
+  ~/Projects/mcp-hub/mcphub_fork/  MCPHub fork — hub backend, API, dashboard, and reference implementation
+  ~/Projects/mcp-hub/ssh-mcp/  SSH MCP stdio server exposed through MCPHub
+scripts/hubctl.ps1           Hub control script (uses the shared mcp-hub project)
 ```
 
 Settings live in `%APPDATA%\fluent_desktop\` with the same file names and JSON shape as the
@@ -51,11 +53,36 @@ dotnet publish FluentDesktop\FluentDesktop.csproj -c Release -r win-x64 -p:Platf
   -p:EnableCompressionInSingleFile=true -o publish
 ```
 
+## MCPHub
+
+The Hub page uses the local fork in `~\Projects\mcp-hub\mcphub_fork`, copied from the Flutter
+project with its local changes. The Flutter copy remains available. See
+[mcp-hub README](../mcp-hub/README.md) for provenance and development guidance.
+
+Build the hub with Node.js and pnpm before starting it from the Hub page:
+
+```powershell
+pnpm --dir ~\Projects\mcp-hub\mcphub_fork install --frozen-lockfile
+pnpm --dir ~\Projects\mcp-hub\mcphub_fork build
+npm --prefix ~\Projects\mcp-hub\ssh-mcp ci
+```
+
+Local hub settings, credentials, and data are retained locally and excluded from
+Git. The hub is a separate Node.js service; publishing the WinUI executable does
+not bundle it. Use `FLUENT_DESKTOP_PROJECT_ROOT` for an installed app to locate
+this checkout.
+
+The **Hub → MCP Endpoints → SSH MCP Connection** fields configure SSH host,
+port, username, private key, and password. Save and restart MCPHub to apply.
+The initial settings use the Flutter project's previous local SSH connection.
+See [SSH MCP setup and verification](../mcp-hub/README.md#ssh-mcp) for details.
+
 ## Environment overrides
 
 | Variable | Purpose |
 | --- | --- |
-| `FLUENT_DESKTOP_PROJECT_ROOT` | Checkout containing `scripts\hubctl.ps1` and `servers\` (Hub; default: this checkout, then `~\Projects\desktop-win` or `~\Projects\flutter-desktop`) |
+| `FLUENT_DESKTOP_PROJECT_ROOT` | Checkout containing `scripts\hubctl.ps1` (Hub scripts; default: this checkout, then `~\Projects\winui`, `~\Projects\desktop-win`, or `~\Projects\flutter-desktop`) |
+| `MCPHUB_DIR` | Alternate MCPHub fork directory (default: `~\Projects\mcp-hub\mcphub_fork`; `MCP_HUB_ROOT` moves the whole hub project) |
 | `FLUENT_DESKTOP_CONFIG_DIR` | Alternate config folder |
 | `YT_DLP_LIBRARY_ROOT` | Local video library root (default `D:\video_manager`, else Downloads) |
 | `YT_DLP_ENV_FILE` | `.env` with `R2_*` credentials (default `%USERPROFILE%\Desktop\auth\.env`) |

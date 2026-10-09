@@ -70,6 +70,8 @@ public sealed partial class HubPage : Page
 
     private async void TestSsh_Click(object sender, RoutedEventArgs e) => await ViewModel.TestSshAsync();
 
+    private async void SaveSshSettings_Click(object sender, RoutedEventArgs e) => await ViewModel.SaveSshSettingsAsync();
+
     private async void ToggleHub_Click(object sender, RoutedEventArgs e) => await ViewModel.ToggleMcphubAsync();
 
     private async void ToggleTunnel_Click(object sender, RoutedEventArgs e) => await ViewModel.ToggleTunnelAsync();

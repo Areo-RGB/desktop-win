@@ -149,7 +149,7 @@
 
                 <!--  Repo list  -->
                 <Border Padding="0" Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.HasRepos, Mode=OneWay}">
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.PagedRepos}">
+                    <ItemsRepeater helpers:Motion.StaggerIn="True" ItemsSource="{x:Bind ViewModel.PagedRepos}">
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="vm:GithubRepoItem">
                                 <Grid
