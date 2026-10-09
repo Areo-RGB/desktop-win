@@ -157,6 +157,25 @@ public static partial class AdbService
         }
     }
 
+    internal static IReadOnlyList<string> BuildInstallApkArgs(string serial, string apkPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(serial);
+        ArgumentException.ThrowIfNullOrWhiteSpace(apkPath);
+        if (!string.Equals(Path.GetExtension(apkPath), ".apk", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Select an .apk file.", nameof(apkPath));
+        if (!File.Exists(apkPath))
+            throw new FileNotFoundException("The APK file was not found.", apkPath);
+        return ["-s", serial, "install", "-r", Path.GetFullPath(apkPath)];
+    }
+
+    /// <summary>Installs or updates an APK on exactly the specified device, preserving app data.</summary>
+    public static Task<CommandResult> InstallApkAsync(string serial, string apkPath) =>
+        ProcessRunner.RunAsync(AdbPath, BuildInstallApkArgs(serial, apkPath), new ProcessOptions
+        {
+            Environment = AdbEnvironment,
+            Timeout = TimeSpan.FromMinutes(3),
+        });
+
     public static Task StartServerAsync() => RunAdbAsync(["start-server"], 10);
 
     public static async Task RestartServerAsync()

@@ -70,6 +70,11 @@ public sealed partial class ScrcpyPage : Page
 
     private static T? TagOf<T>(object sender) where T : class => (sender as FrameworkElement)?.Tag as T;
 
+    private async void InstallApk_Click(object sender, RoutedEventArgs e)
+    {
+        if (TagOf<DeviceItem>(sender) is { } device) await ViewModel.PickAndInstallApkAsync(device);
+    }
+
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await ViewModel.RefreshDevicesAsync();
 
     private async void Recheck_Click(object sender, RoutedEventArgs e) => await ViewModel.CheckBinariesAsync();

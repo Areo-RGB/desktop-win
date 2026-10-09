@@ -41,6 +41,8 @@ public sealed partial class DeviceItem(AdbDevice device) : ObservableObject
 
     [ObservableProperty] private bool _isSelected;
     [ObservableProperty] private bool _isCapturing;
+    [ObservableProperty] private bool _isInstallingApk;
+    [ObservableProperty] private string _apkInstallStatus = "";
     [ObservableProperty] private ScreenshotItem? _activeScreenshot;
 
     public bool HasScreenshots => Screenshots.Count > 0;
@@ -74,6 +76,7 @@ public sealed partial class ScrcpyViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _checkingBinaries = true;
     [ObservableProperty] private BinaryStatus? _binaries;
     [ObservableProperty] private DeviceItem? _selectedDevice;
+    [ObservableProperty] private bool _isInstallingApk;
 
     public string Subtitle => CheckingBinaries
         ? "Checking ADB / scrcpy…"
@@ -102,6 +105,49 @@ public sealed partial class ScrcpyViewModel : ViewModelBase, IDisposable
         : "Hit Refresh to scan for devices via ADB. Nothing runs until you do.";
 
     public bool CanLaunchSelected => SelectedDevice?.IsOnline == true;
+    public bool CanInstallApk => SelectedDevice?.IsOnline == true && Binaries?.AdbOk == true
+        && !CheckingBinaries && !IsScanning && !IsInstallingApk;
+    public string ApkInstallStatus { get; private set; } = "Select a device to install an APK. Updates preserve app data.";
+    partial void OnIsInstallingApkChanged(bool value) => OnPropertyChanged(nameof(CanInstallApk));
+
+    public async Task PickAndInstallApkAsync(DeviceItem device)
+    {
+        if (!device.IsOnline || IsInstallingApk || IsScanning || CheckingBinaries) return;
+        if (Binaries?.AdbOk != true)
+        {
+            Services.Notifier.Error("ADB is required to install APKs. Install Android Platform-Tools and recheck binaries.");
+            return;
+        }
+        SelectedDevice = device;
+        IsInstallingApk = true;
+        device.IsInstallingApk = true;
+        ApkInstallStatus = device.ApkInstallStatus;
+        try
+        {
+            var path = await Pickers.PickApkAsync();
+            if (path == null) return;
+            ApkInstallStatus = $"Installing {Path.GetFileName(path)} on {device.DisplayName} ({device.Serial})…";
+            device.ApkInstallStatus = ApkInstallStatus;
+            var result = await AdbService.InstallApkAsync(device.Serial, path);
+            ApkInstallStatus = result.Ok
+                ? $"Installed {Path.GetFileName(path)} on {device.DisplayName} ({device.Serial})."
+                : $"APK installation failed on {device.Serial}: {result.CombinedOutput}";
+            if (result.Ok) Services.Notifier.Success(ApkInstallStatus);
+            else Services.Notifier.Error(ApkInstallStatus);
+        }
+        catch (Exception e)
+        {
+            ApkInstallStatus = $"APK installation failed on {device.Serial}: {e.Message}";
+            Services.Notifier.Error(ApkInstallStatus);
+        }
+        finally
+        {
+            IsInstallingApk = false;
+            device.IsInstallingApk = false;
+            device.ApkInstallStatus = ApkInstallStatus;
+        }
+    }
+
     public bool HasRunning => Running.Count > 0;
 
     public string ScrcpyPathText => Binaries?.ScrcpyPath ?? "checking…";
@@ -118,10 +164,12 @@ public sealed partial class ScrcpyViewModel : ViewModelBase, IDisposable
     {
         foreach (var d in Devices) d.IsSelected = ReferenceEquals(d, value);
         OnPropertyChanged(nameof(CanLaunchSelected));
+        OnPropertyChanged(nameof(CanInstallApk));
     }
 
     private void RaiseDerived()
     {
+        OnPropertyChanged(nameof(CanInstallApk));
         OnPropertyChanged(nameof(Subtitle));
         OnPropertyChanged(nameof(ShowBinaryBanner));
         OnPropertyChanged(nameof(BinaryBannerTitle));

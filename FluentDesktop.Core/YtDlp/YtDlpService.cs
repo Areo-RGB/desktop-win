@@ -106,6 +106,53 @@ public sealed partial class YtDlpService(string executable = "yt-dlp", string? h
         }
     }
 
+    public async Task<string> GetVersionAsync()
+    {
+        var result = await ProcessRunner.RunAsync(executable, ["--version"],
+            new ProcessOptions { Timeout = TimeSpan.FromSeconds(15) }).ConfigureAwait(false);
+        if (!result.Ok) throw new YtDlpException("Could not read yt-dlp version.");
+        return result.Stdout.Trim();
+    }
+
+    public async Task<string> UpdateAsync(Action<string>? onOutput = null)
+    {
+        var result = await ProcessRunner.RunAsync(executable, ["-U"],
+            new ProcessOptions { Timeout = TimeSpan.FromMinutes(3) }).ConfigureAwait(false);
+        var output = (result.Stdout + "\n" + result.Stderr).Trim();
+        if (!result.Ok) throw new YtDlpException(output.Length == 0 ? "yt-dlp update failed." : output);
+        return output;
+    }
+
+    /// <summary>Picks the most useful yt-dlp log lines for an error message.</summary>
+    private static string ExtractFailureDetail(List<string> log)
+    {
+        var errors = log
+            .Select(l => l.Trim())
+            .Where(l => l.StartsWith("ERROR", StringComparison.OrdinalIgnoreCase))
+            .Select(l => l.Length > 300 ? l[..300] : l)
+            .TakeLast(3)
+            .ToList();
+        if (errors.Count > 0) return string.Join("\n", errors);
+        var fallback = log
+            .Select(l => l.Trim())
+            .Where(l => l.Length > 0 && !l.StartsWith("[download]", StringComparison.Ordinal))
+            .TakeLast(3)
+            .ToList();
+        return fallback.Count > 0 ? string.Join("\n", fallback) : "";
+    }
+
+    private static string? UpdateHint(string detail) =>
+        detail.Contains("403", StringComparison.Ordinal) ||
+        detail.Contains("Forbidden", StringComparison.OrdinalIgnoreCase) ||
+        detail.Contains("SABR", StringComparison.OrdinalIgnoreCase)
+            ? "YouTube blocked the download. Update yt-dlp (`yt-dlp -U`) and retry."
+            : detail.Contains("ffmpeg", StringComparison.OrdinalIgnoreCase) ||
+              detail.Contains("ffprobe", StringComparison.OrdinalIgnoreCase)
+                ? "Audio conversion needs ffmpeg on PATH (`winget install yt-dlp.FFmpeg`)."
+                : detail.Contains("older than", StringComparison.OrdinalIgnoreCase)
+                    ? "Your yt-dlp version is old. Update it (`yt-dlp -U`) and retry."
+                    : null;
+
     public async Task<string> DownloadAsync(YtDownloadOptions options, Action<YtDownloadProgress>? onProgress)
     {
         var url = options.Url.Trim();
@@ -122,8 +169,14 @@ public sealed partial class YtDlpService(string executable = "yt-dlp", string? h
             if (!_cancelRequested) onProgress?.Invoke(p);
         }
 
+        var log = new List<string>();
         void Handle(string line)
         {
+            lock (log)
+            {
+                log.Add(line);
+                if (log.Count > 200) log.RemoveAt(0);
+            }
             if (parser.Parse(line) is { } p) Emit(p);
         }
 
@@ -135,7 +188,18 @@ public sealed partial class YtDlpService(string executable = "yt-dlp", string? h
             var code = await managed.WaitAsync().ConfigureAwait(false);
             managed.Dispose();
             if (_cancelRequested) throw new YtDlpCancelledException();
-            if (code != 0) throw new YtDlpException($"yt-dlp exited with code {code}. Check the URL or parameters.");
+            if (code != 0)
+            {
+                List<string> snapshot;
+                lock (log) snapshot = [.. log];
+                var detail = ExtractFailureDetail(snapshot);
+                var hint = detail.Length > 0 ? UpdateHint(detail) : null;
+                var message = detail.Length > 0
+                    ? $"Download failed (exit {code}): {detail}"
+                    : $"yt-dlp exited with code {code}. Check the URL or parameters.";
+                if (hint != null) message += $"\n{hint}";
+                throw new YtDlpException(message);
+            }
             Emit(new YtDownloadProgress(100, "Done", "Done", "00:00", "Download completed successfully!", parser.OutputFile));
             return parser.OutputFile;
         }
