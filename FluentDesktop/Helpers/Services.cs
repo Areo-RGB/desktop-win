@@ -18,6 +18,11 @@ public static class Services
     private static readonly Lazy<ScrcpyViewModel> _scrcpy = new(() => new ScrcpyViewModel());
     private static readonly Lazy<YtDlpViewModel> _ytdlp = new(() => new YtDlpViewModel());
     private static readonly Lazy<DesktopCommanderViewModel> _desktopCommander = new(() => new DesktopCommanderViewModel());
+    private static readonly Lazy<ProjectsViewModel> _projects = new(() => new ProjectsViewModel());
+    private static readonly Lazy<McpViewModel> _mcp = new(() => new McpViewModel());
+    private static readonly Lazy<SkillsViewModel> _skills = new(() => new SkillsViewModel());
+    private static readonly Lazy<VideoViewModel> _video = new(() => new VideoViewModel());
+    private static readonly Lazy<ToolsViewModel> _tools = new(() => new ToolsViewModel());
     private static readonly Lazy<SettingsViewModel> _settings = new(() => new SettingsViewModel());
 
     public static DashboardViewModel Dashboard => _dashboard.Value;
@@ -27,6 +32,11 @@ public static class Services
     public static ScrcpyViewModel Scrcpy => _scrcpy.Value;
     public static YtDlpViewModel YtDlp => _ytdlp.Value;
     public static DesktopCommanderViewModel DesktopCommander => _desktopCommander.Value;
+    public static ProjectsViewModel Projects => _projects.Value;
+    public static McpViewModel Mcp => _mcp.Value;
+    public static SkillsViewModel Skills => _skills.Value;
+    public static VideoViewModel Video => _video.Value;
+    public static ToolsViewModel Tools => _tools.Value;
     public static SettingsViewModel Settings => _settings.Value;
 
     public static void ShutDown()
@@ -36,6 +46,8 @@ public static class Services
         if (_scrcpy.IsValueCreated) _scrcpy.Value.Dispose();
         if (_hub.IsValueCreated) _hub.Value.Dispose();
         if (_desktopCommander.IsValueCreated) _desktopCommander.Value.Dispose();
+        if (_projects.IsValueCreated) _projects.Value.Dispose();
+        if (_video.IsValueCreated) _video.Value.Dispose();
     }
 }
 

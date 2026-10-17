@@ -100,7 +100,7 @@ public sealed partial class YtDlpViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _embedMetadata;
     [ObservableProperty] private bool _embedChapters;
     [ObservableProperty] private int _playlistIndex;
-    [ObservableProperty] private string _outputDir = YtDlpService.DefaultDownloadDir;
+    [ObservableProperty] private string _outputDir = FluentDesktop.Core.Settings.FolderSettings.Load().Downloads;
     [ObservableProperty] private bool _isLoadingLocal;
     [ObservableProperty] private bool _isLoadingCloud;
     [ObservableProperty] private string _localSearch = "";

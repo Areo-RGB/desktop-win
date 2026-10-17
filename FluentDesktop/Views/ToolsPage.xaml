@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="FluentDesktop.Views.ToolsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FluentDesktop.Controls"
+    xmlns:helpers="using:FluentDesktop.Helpers"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
+    xmlns:vm="using:FluentDesktop.ViewModels"
+    NavigationCacheMode="Required">
+
+    <ScrollViewer>
+        <controls:CenteredColumn MaxContentWidth="{StaticResource PageMaxWidth}">
+            <StackPanel Padding="{StaticResource PagePadding}" Spacing="{StaticResource SettingsCardSpacing}">
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Tools" />
+                <TextBlock Margin="0,0,0,8" Style="{StaticResource SecondaryCaptionStyle}" Text="Small utilities and environment checks" />
+
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Greeter" />
+                <toolkit:SettingsCard Description="{x:Bind ViewModel.Greeting, Mode=OneWay}" Header="Name">
+                    <toolkit:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xE77B;" />
+                    </toolkit:SettingsCard.HeaderIcon>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBox MinWidth="220" KeyDown="Name_KeyDown" PlaceholderText="Your name" Text="{x:Bind ViewModel.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Click="Greet_Click" Content="Greet" Style="{StaticResource AccentButtonStyle}" />
+                    </StackPanel>
+                </toolkit:SettingsCard>
+
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="System info" />
+                <toolkit:SettingsExpander Description="Host details and CLI tool versions" Header="Environment" IsExpanded="True">
+                    <toolkit:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE7F8;" />
+                    </toolkit:SettingsExpander.HeaderIcon>
+                    <Button Click="Probe_Click" IsEnabled="{x:Bind ViewModel.NotProbing, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Grid Width="14" Height="14">
+                                <ProgressRing Width="14" Height="14" IsActive="{x:Bind ViewModel.IsProbing, Mode=OneWay}" />
+                                <FontIcon FontSize="14" Glyph="&#xE72C;" Visibility="{x:Bind ViewModel.NotProbing, Mode=OneWay}" />
+                            </Grid>
+                            <TextBlock Text="Check again" />
+                        </StackPanel>
+                    </Button>
+                </toolkit:SettingsExpander>
+                <ItemsRepeater Margin="0,4,0,0" ItemsSource="{x:Bind ViewModel.Rows}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Spacing="2" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="vm:InfoRow">
+                            <Grid Padding="16,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" ColumnSpacing="16" CornerRadius="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind Key}" />
+                                <TextBlock Grid.Column="1" IsTextSelectionEnabled="True" Text="{x:Bind Value}" TextWrapping="Wrap" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
+        </controls:CenteredColumn>
+    </ScrollViewer>
+</Page>

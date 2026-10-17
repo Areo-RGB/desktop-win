@@ -20,6 +20,64 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     public string AdbPath => AdbService.AdbPath;
 
+    // ---- folders (paths.json, shared with DesktopCC) ----------------------
+
+    private FolderSettings _folders = FolderSettings.Load();
+
+    [ObservableProperty]
+    private string _projectsFolder = "";
+
+    [ObservableProperty]
+    private string _downloadsFolder = "";
+
+    [ObservableProperty]
+    private string _videoLibraryFolder = "";
+
+    partial void OnProjectsFolderChanged(string value) => SaveFolders();
+
+    partial void OnDownloadsFolderChanged(string value) => SaveFolders();
+
+    partial void OnVideoLibraryFolderChanged(string value) => SaveFolders();
+
+    private bool _foldersLoaded;
+
+    public void LoadFolders()
+    {
+        _folders = FolderSettings.Load();
+        ProjectsFolder = _folders.Projects;
+        DownloadsFolder = _folders.Downloads;
+        VideoLibraryFolder = _folders.VideoLibrary;
+        _foldersLoaded = true;
+    }
+
+    /// <summary>Saved as you type; pages use them on the next scan or download.</summary>
+    private void SaveFolders()
+    {
+        if (!_foldersLoaded) return;
+        _folders = _folders with
+        {
+            Projects = ProjectsFolder.Trim(),
+            Downloads = DownloadsFolder.Trim(),
+            VideoLibrary = VideoLibraryFolder.Trim(),
+        };
+        _ = _folders.SaveAsync();
+    }
+
+    // ---- logs -------------------------------------------------------------
+
+    public IReadOnlyList<string> LogSources => AppLogs.Sources;
+
+    [ObservableProperty]
+    private int _logSourceIndex;
+
+    [ObservableProperty]
+    private LogBuffer _currentLog = AppLogs.For(AppLogs.Sources[0]);
+
+    partial void OnLogSourceIndexChanged(int value) =>
+        CurrentLog = AppLogs.For(AppLogs.Sources[Math.Clamp(value, 0, AppLogs.Sources.Length - 1)]);
+
+    public void ClearLog() => CurrentLog.Clear();
+
     public string AppVersion => typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
 
     public async Task<AppSettings> LoadAsync()

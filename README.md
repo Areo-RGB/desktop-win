@@ -16,7 +16,12 @@ Layout and controls follow [microsoft/WinUI-Gallery](https://github.com/microsof
     DeviceMirror/            adb devices/props/screencap/tcpip/reboot, scrcpy launch
     YtDlp/                   yt-dlp metadata + downloads, local library, Cloudflare R2 (SigV4)
     SpielerPlus/             bundled Python pipeline (SpielerPlus/python, embedded, extracted to %LOCALAPPDATA%)
-    Settings/                theme / backdrop preferences
+    Settings/                theme / backdrop preferences, folders (paths.json)
+    Mcp/                     MCP servers synced to Claude/Codex/Gemini/Grok/OpenCode/Hermes/Pi/MiniMax (mcp_servers.json)
+    Projects/                ~/Projects discovery (flutter/web/android/extension) and start commands
+    Skills/                  Git-backed skills store (~/Projects/skills) linked into Pi/Claude/Codex/OpenCode
+    Video/                   ffprobe/ffmpeg chapter metadata + HEVC re-encode, Training Hub R2 (r2.properties, rclone)
+    Tools/                   host info and CLI tool versions
   FluentDesktop.Core.Tests/  xUnit tests for the backend (run on any OS)
   FluentDesktop/             WinUI 3 app (unpackaged, self-contained)
   ~/Projects/mcp-hub/mcphub_fork/  MCPHub fork — hub backend, API, dashboard, and reference implementation
@@ -26,7 +31,9 @@ scripts/hubctl.ps1           Hub control script (uses the shared mcp-hub project
 
 Settings live in `%APPDATA%\fluent_desktop\` with the same file names and JSON shape as the
 Flutter app (`dashboard_commands.json`, `github_repos.json`, `desktop_commander.json`,
-`yt_dlp_history.json`, `spielerplus_config.json`), so existing data carries over.
+`yt_dlp_history.json`, `spielerplus_config.json`), so existing data carries over. The Projects,
+MCP, Skills, Video and Tools pages port DesktopCC (Rust/GPUI) and share its files
+(`paths.json`, `mcp_servers.json`, `projects_hidden.json`, `r2.properties`).
 
 ## Build & run (Windows 10 1809+ / 11)
 

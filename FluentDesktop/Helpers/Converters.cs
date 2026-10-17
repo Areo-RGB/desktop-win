@@ -34,3 +34,20 @@ public sealed class DesktopCommanderLogBrushConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
 }
+
+/// <summary>App log lines (<see cref="AppLogs"/>): colored by their level marker.</summary>
+public sealed class LevelLogBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        var s = value as string ?? "";
+        var body = s.Length > 10 && s[2] == ':' ? s[10..] : s;
+        if (body.StartsWith("✗ ") || body.StartsWith("[ERR")) return ThemeBrush.Get("ConsoleErrorBrush");
+        if (body.StartsWith("✓ ")) return ThemeBrush.Get("ConsoleSuccessBrush");
+        if (body.StartsWith("$ ")) return ThemeBrush.Get("ConsoleInfoBrush");
+        if (body.StartsWith("! ")) return Bind.Warning;
+        return ThemeBrush.Get("ConsoleMutedBrush");
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
+}

@@ -23,6 +23,14 @@ public static class Bind
 
     public static Visibility VisibleIfNone(int count) => count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
+    public static Brush SelectedBorder(bool selected) =>
+        (Brush)Application.Current.Resources[selected ? "AccentFillColorDefaultBrush" : "CardStrokeColorDefaultBrush"];
+
+    public static bool HasText(string? value) => !string.IsNullOrEmpty(value);
+
+    public static Microsoft.UI.Xaml.Controls.InfoBarSeverity Severity(bool error) =>
+        error ? Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error : Microsoft.UI.Xaml.Controls.InfoBarSeverity.Success;
+
     public static bool And(bool a, bool b) => a && b;
 
     public static Visibility AndNotVisible(bool a, bool b) => Visible(a && !b);

@@ -5,4 +5,5 @@
     xmlns:helpers="using:FluentDesktop.Helpers">
     <helpers:DashboardLogBrushConverter x:Key="DashboardLogBrushConverter" />
     <helpers:DesktopCommanderLogBrushConverter x:Key="DesktopCommanderLogBrushConverter" />
+    <helpers:LevelLogBrushConverter x:Key="LevelLogBrushConverter" />
 </ResourceDictionary>

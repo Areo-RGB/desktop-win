@@ -1,6 +1,7 @@
 # WinUI project guidance
 
-- If using Superpowers, execute automatically without stopping for confirmation gates.
+"C:\Users\paul\Projects\winui\learn.exe" to access microsoft documentation
+
 - Put failures, gaps, and open todos first in summaries.
 
 ## Hub features

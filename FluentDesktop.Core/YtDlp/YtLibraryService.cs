@@ -119,6 +119,26 @@ public sealed partial class YtLibraryService(HttpClient? http = null)
         return new YtCloudLibrary(config.Bucket, folders);
     }
 
+    /// <summary>Every object under <paramref name="prefix"/>, following continuation tokens.</summary>
+    public async Task<List<(string Key, long Size, DateTimeOffset? Modified)>> ListR2ObjectsAsync(YtR2Config config, string prefix)
+    {
+        if (!config.CanList) throw new YtDlpException("Enter Cloudflare R2 credentials first.");
+        var objects = new List<(string Key, long Size, DateTimeOffset? Modified)>();
+        string? token = null;
+        do
+        {
+            var query = new Dictionary<string, string> { ["list-type"] = "2", ["prefix"] = prefix };
+            if (token != null) query["continuation-token"] = token;
+            using var response = await SendSignedAsync(config, HttpMethod.Get, query: query).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode) throw new YtDlpException($"R2 listing failed ({(int)response.StatusCode}): {body}");
+            objects.AddRange(ParseObjects(body));
+            token = FirstXmlValue(body, "NextContinuationToken");
+        }
+        while (!string.IsNullOrEmpty(token));
+        return objects;
+    }
+
     public async Task DeleteR2ObjectAsync(YtR2Config config, string key)
     {
         using var response = await SendSignedAsync(config, HttpMethod.Delete, key: key).ConfigureAwait(false);

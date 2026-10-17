@@ -38,6 +38,21 @@
                         <FontIcon Glyph="&#xF246;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem Content="Projects" Tag="Projects">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE8B7;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="MCP Servers" Tag="Mcp">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE703;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Skills" Tag="Skills">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE82D;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Content="SpielerPlus" Tag="Spielerplus">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE787;" />
@@ -61,6 +76,16 @@
                 <NavigationViewItem Content="YT-DLP" Tag="YtDlp">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE896;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Video" Tag="Video">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE714;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Tools" Tag="Tools">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE90F;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
